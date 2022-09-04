@@ -1,0 +1,29 @@
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths-ignore:
+      - "**/*.md"
+  pull_request:
+
+name: Test on Linux
+jobs:
+  test-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["cpp"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.5
+
+      - name: Install build dependencies
+        run: "sudo apt-get update && sudo apt-get install git build-essential cmake"
+
+      - name: Compile
+        run: "mkdir build && cd build && cmake .. -Dereignis_tests=ON && cmake --build . --config Debug"
+
+      - name: Run Tests
+        run: "./build/ereignis_tests"
