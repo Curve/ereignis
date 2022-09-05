@@ -20,6 +20,10 @@ namespace ereignis
 
       public:
         template <auto Id, std::size_t I = 0> constexpr auto &at();
+
+      public:
+        template <typename EventId> void clear(EventId event);
+        template <typename EventId> void remove(EventId event, std::uint64_t id);
     };
 } // namespace ereignis
 

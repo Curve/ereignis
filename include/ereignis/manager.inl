@@ -41,4 +41,36 @@ namespace ereignis
             }
         }
     }
+
+    template <class... Events> template <typename EventId> void event_manager<Events...>::remove(EventId event, std::uint64_t id)
+    {
+        std::apply(
+            [&](auto &...events) {
+                auto visit = [&](auto &item) {
+                    using item_t = std::decay_t<decltype(item)>;
+                    if (item_t::id == event)
+                    {
+                        item.remove(id);
+                    }
+                };
+                (visit(events), ...);
+            },
+            m_events);
+    }
+
+    template <class... Events> template <typename EventId> void event_manager<Events...>::clear(EventId event)
+    {
+        std::apply(
+            [&](auto &...events) {
+                auto visit = [&](auto &item) {
+                    using item_t = std::decay_t<decltype(item)>;
+                    if (item_t::id == event)
+                    {
+                        item.clear();
+                    }
+                };
+                (visit(events), ...);
+            },
+            m_events);
+    }
 } // namespace ereignis

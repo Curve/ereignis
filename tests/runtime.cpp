@@ -18,8 +18,8 @@ TEST_CASE("Perform runtime checks", "[runtime]")
 
     std::size_t first_call_count{0};
     event_manager.at<0>().add([&] { first_call_count++; });
-    event_manager.at<0>().add([&] { first_call_count++; });
     auto id = event_manager.at<0>().add([&] { first_call_count++; });
+    auto id2 = event_manager.at<0>().add([&] { first_call_count++; });
 
     event_manager.at<0>().fire();
     REQUIRE(first_call_count == 3);
@@ -29,10 +29,15 @@ TEST_CASE("Perform runtime checks", "[runtime]")
 
     REQUIRE(first_call_count == 5);
 
+    event_manager.remove(0, id2);
+    event_manager.at<0>().fire();
+
+    REQUIRE(first_call_count == 6);
+
     event_manager.at<0>().clear();
     event_manager.at<0>().fire();
 
-    REQUIRE(first_call_count == 5);
+    REQUIRE(first_call_count == 6);
 
     event_manager.at<1>().add([] { return 10; });
     REQUIRE(*event_manager.at<1>().fire().begin() == 10);
@@ -68,6 +73,11 @@ TEST_CASE("Perform runtime checks", "[runtime]")
 
     event_manager.at<4>().add([](bool *value) { (*value) = false; });
     event_manager.at<4>().fire(&value);
+
+    REQUIRE(!value);
+
+    event_manager.clear(3);
+    event_manager.at<3>().fire(value);
 
     REQUIRE(!value);
 }
