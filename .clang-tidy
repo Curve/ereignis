@@ -58,4 +58,5 @@ Checks: "*,\
   -readability-named-parameter,\
   -bugprone-easily-swappable-parameters,\
   -readability-identifier-length,\
-  -llvm-include-order"
+  -llvm-include-order,\
+  -cert-dcl21-cpp"

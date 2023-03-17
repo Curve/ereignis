@@ -4,30 +4,41 @@
 #include <map>
 #include <mutex>
 #include <atomic>
-#include <cstdint>
 #include <functional>
 
 namespace ereignis
 {
-    template <auto Id, typename Callback> struct event
-    {
-        static constexpr auto id = Id;
-        using callback_t = std::function<Callback>;
-        using result_t = typename callback_t::result_type;
+    template <typename T>
+    concept callback = requires(T t) { std::function{t}; };
 
+    template <typename Callback, typename... T>
+    concept argument = requires(Callback &callback, T &&...t) { callback(std::forward<T>(t)...); };
+
+    template <auto Id, callback Callback> class event
+    {
       private:
         std::mutex m_mutex;
-        std::atomic_uint64_t m_counter{0};
-        std::map<std::uint64_t, callback_t> m_callbacks;
+        std::atomic_size_t m_counter{0};
+        std::map<std::size_t, std::function<Callback>> m_callbacks;
 
       public:
         void clear();
-        void remove(std::uint64_t);
-        std::uint64_t add(callback_t &&);
 
       public:
-        template <typename... Params> auto fire(Params &&...);
-        template <typename... Params> auto fire(Params &&...) const;
+        void remove(std::size_t id);
+        std::size_t add(callback auto callback);
+
+      public:
+        template <typename... T>
+            requires argument<Callback, T...>
+        auto fire(T &&...args);
+
+        template <typename... T>
+            requires argument<Callback, T...>
+        auto fire(T &&...args) const;
+
+      public:
+        static constexpr auto id = Id;
     };
 } // namespace ereignis
 

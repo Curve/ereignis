@@ -1,69 +1,55 @@
 #pragma once
 #include "event.hpp"
-#include <type_traits>
-#include "utils/type_traits.hpp"
 
 namespace ereignis
 {
-    template <auto Id, typename Callback> void event<Id, Callback>::clear()
+    template <auto Id, callback Callback> void event<Id, Callback>::clear()
     {
-        std::lock_guard guard(m_mutex);
+        std::lock_guard lock(m_mutex);
         m_callbacks.clear();
     }
 
-    template <auto Id, typename Callback> void event<Id, Callback>::remove(std::uint64_t id)
+    template <auto Id, callback Callback> void event<Id, Callback>::remove(std::size_t id)
     {
-        std::lock_guard guard(m_mutex);
+        std::lock_guard lock(m_mutex);
         m_callbacks.erase(id);
     }
 
-    template <auto Id, typename Callback> std::uint64_t event<Id, Callback>::add(callback_t &&callback)
+    template <auto Id, callback Callback> std::size_t event<Id, Callback>::add(callback auto callback)
     {
-        std::lock_guard guard(m_mutex);
+        std::lock_guard lock(m_mutex);
 
         auto id = ++m_counter;
-        m_callbacks.emplace(id, std::move(callback));
+        m_callbacks.emplace(id, callback);
 
         return id;
     }
 
-    template <auto Id, typename Callback> //
-    template <typename... Params>
-    auto event<Id, Callback>::fire(Params &&...params)
+    template <auto Id, callback Callback>
+    template <typename... T>
+        requires argument<Callback, T...>
+    auto event<Id, Callback>::fire(T &&...args)
     {
-        auto parameters = std::tuple<remove_const_ref_t<Params>...>{std::forward<Params>(params)...};
+        using return_t = typename std::decay_t<decltype(m_callbacks.at(0))>::result_type;
 
-        if constexpr (std::is_same_v<result_t, void>)
+        if constexpr (std::is_same_v<return_t, void>)
         {
-            auto invoker = ereignis::invoker<result_t, callback_t, remove_const_ref_t<Params>...>(m_mutex, m_callbacks, std::move(parameters));
-            for (auto it = invoker.begin(); it != invoker.end(); ++it)
+            for (const auto &[key, callback] : m_callbacks)
             {
-                (*it);
+                callback(args...);
             }
         }
         else
         {
-            return invoker<result_t, callback_t, remove_const_ref_t<Params>...>(m_mutex, m_callbacks, std::move(parameters));
+            return invoker(m_callbacks, std::make_tuple(args...));
         }
     }
 
-    template <auto Id, typename Callback> //
-    template <typename... Params>
-    auto event<Id, Callback>::fire(Params &&...params) const
+    template <auto Id, callback Callback>
+    template <typename... T>
+        requires argument<Callback, T...>
+    auto event<Id, Callback>::fire(T &&...args) const
     {
-        auto parameters = std::tuple<remove_const_ref_t<Params>...>{std::forward<Params>(params)...};
-
-        if constexpr (std::is_same_v<result_t, void>)
-        {
-            auto invoker = ereignis::invoker<result_t, callback_t, remove_const_ref_t<Params>...>(m_mutex, m_callbacks, std::move(parameters));
-            for (auto it = invoker.begin(); it != invoker.end(); ++it)
-            {
-                (*it);
-            }
-        }
-        else
-        {
-            return invoker<result_t, callback_t, remove_const_ref_t<Params>...>(m_mutex, m_callbacks, std::move(parameters));
-        }
+        return invoker(m_callbacks, std::make_tuple(args...));
     }
 } // namespace ereignis

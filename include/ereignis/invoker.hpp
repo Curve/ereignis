@@ -1,35 +1,42 @@
 #pragma once
 #include <map>
-#include <mutex>
-#include <cstdint>
+#include <tuple>
+#include <ranges>
+#include <iterator>
+#include <functional>
+#include <type_traits>
 
 namespace ereignis
 {
-    template <typename Type, typename Callback, typename... Params> class invoker
+    template <typename T>
+    concept callback_list = requires(T t) { []<typename A, typename B>(std::map<A, std::function<B>> &) {}(t); };
+
+    template <typename T, typename... P>
+    concept callback_parameters = requires(T t, std::tuple<P...> p) { callback_list<T>, std::apply(t.begin()->second, p); };
+
+    template <callback_list T, typename... P>
+        requires callback_parameters<T, P...>
+    class invoker
     {
-        using map_t = std::map<std::uint64_t, Callback>;
-
-        using const_iterator_t = typename map_t::const_iterator;
-        using iterator_t = typename map_t::iterator;
+        class iterator;
+        using args_t = std::tuple<P...>;
 
       private:
-        std::lock_guard<std::mutex> m_guard;
-        map_t &m_map;
-
-      private:
-        std::tuple<Params...> m_params;
+        T m_callbacks;
+        args_t m_args;
 
       public:
-        invoker(std::mutex &, map_t &, std::tuple<Params...> &&);
-
-      public:
-        auto begin();
-        auto begin() const;
+        invoker(T callbacks, args_t &&args);
 
       public:
         auto end();
-        auto end() const;
+        auto begin();
     };
+
 } // namespace ereignis
+
+template <ereignis::callback_list T, typename... P>
+    requires ereignis::callback_parameters<T, P...>
+constexpr inline bool std::ranges::enable_view<ereignis::invoker<T, P...>> = true;
 
 #include "invoker.inl"

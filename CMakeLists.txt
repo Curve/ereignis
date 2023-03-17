@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 3.1)
-project(ereignis LANGUAGES CXX VERSION 1.0)
+cmake_minimum_required(VERSION 3.12)
+project(ereignis LANGUAGES CXX VERSION 1.2)
 
 # --------------------------------------------------------------------------------------------------------
 # Library options
 # --------------------------------------------------------------------------------------------------------
 
-option(ereignis_tests "Run tests" OFF)
+option(ereignis_tests "Run tests" ON)
 
 # --------------------------------------------------------------------------------------------------------
 # Create library
@@ -14,8 +14,8 @@ option(ereignis_tests "Run tests" OFF)
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(soundux::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 CXX_EXTENSIONS OFF CXX_STANDARD_REQUIRED ON)
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20 CXX_EXTENSIONS OFF CXX_STANDARD_REQUIRED ON)
 
 # --------------------------------------------------------------------------------------------------------
 # Include "include" folder

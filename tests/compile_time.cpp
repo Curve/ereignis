@@ -12,19 +12,28 @@ TEST_CASE("Perform compile time checks", "[constexpr]")
         two,
     };
 
-    using event_manager = ereignis::event_manager< //
-        event<0, void()>,                          //
-        event<1, int()>                            //
+    using event_manager = ereignis::manager< //
+        event<0, void()>,                    //
+        event<1, int()>                      //
         >;
 
-    using event_manager_with_enums = ereignis::event_manager< //
-        event<enum_ids::one, void()>,                         //
-        event<enum_ids::two, int()>                           //
+    using event_manager_with_enums = ereignis::manager< //
+        event<enum_ids::one, void()>,                   //
+        event<enum_ids::two, int()>                     //
         >;
 
-    static_assert(std::is_same_v<event_manager::callback_t<0>::result_type, void>);
-    static_assert(std::is_same_v<event_manager::callback_t<1>::result_type, int>);
+    event_manager dummy{};
+    using invoker = decltype(dummy.at<1>().fire());
+    using iterator = decltype(dummy.at<1>().fire().begin());
 
-    static_assert(std::is_same_v<event_manager_with_enums::callback_t<enum_ids::one>::result_type, void>);
-    static_assert(std::is_same_v<event_manager_with_enums::callback_t<enum_ids::two>::result_type, int>);
+    static_assert(std::ranges::view<invoker>);
+    static_assert(std::forward_iterator<iterator>);
+
+    static_assert(std::is_same_v<event_manager::type_t<0>, void()>);
+
+    static_assert(std::is_same_v<std::function<event_manager::type_t<0>>::result_type, void>);
+    static_assert(std::is_same_v<std::function<event_manager::type_t<1>>::result_type, int>);
+
+    static_assert(std::is_same_v<std::function<event_manager_with_enums::type_t<enum_ids::one>>::result_type, void>);
+    static_assert(std::is_same_v<std::function<event_manager_with_enums::type_t<enum_ids::two>>::result_type, int>);
 }

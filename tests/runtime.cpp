@@ -1,4 +1,3 @@
-#include "ereignis/utils/type_traits.hpp"
 #include <vector>
 #include <catch2/catch.hpp>
 #include <ereignis/manager.hpp>
@@ -7,7 +6,7 @@ TEST_CASE("Perform runtime checks", "[runtime]")
 {
     using ereignis::event;
 
-    ereignis::event_manager<    //
+    ereignis::manager<          //
         event<0, void()>,       //
         event<1, int()>,        //
         event<2, bool(int)>,    //
@@ -17,7 +16,9 @@ TEST_CASE("Perform runtime checks", "[runtime]")
         event_manager;
 
     std::size_t first_call_count{0};
+
     event_manager.at<0>().add([&] { first_call_count++; });
+
     auto id = event_manager.at<0>().add([&] { first_call_count++; });
     auto id2 = event_manager.at<0>().add([&] { first_call_count++; });
 
