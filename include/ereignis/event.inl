@@ -15,19 +15,19 @@ namespace ereignis
         m_callbacks.erase(id);
     }
 
-    template <auto Id, callback Callback> std::size_t event<Id, Callback>::add(callback auto callback)
+    template <auto Id, callback Callback> std::size_t event<Id, Callback>::add(callback auto &&callback)
     {
         std::lock_guard lock(m_mutex);
 
         auto id = ++m_counter;
-        m_callbacks.emplace(id, callback);
+        m_callbacks.emplace(id, std::forward<decltype(callback)>(callback));
 
         return id;
     }
 
     template <auto Id, callback Callback>
     template <typename... T>
-        requires argument<Callback, T...>
+        requires valid_arguments<Callback, T...>
     auto event<Id, Callback>::fire(T &&...args)
     {
         using return_t = typename std::decay_t<decltype(m_callbacks.at(0))>::result_type;
@@ -47,7 +47,7 @@ namespace ereignis
 
     template <auto Id, callback Callback>
     template <typename... T>
-        requires argument<Callback, T...>
+        requires valid_arguments<Callback, T...>
     auto event<Id, Callback>::fire(T &&...args) const
     {
         return invoker(m_callbacks, std::make_tuple(args...));

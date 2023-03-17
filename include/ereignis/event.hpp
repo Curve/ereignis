@@ -12,7 +12,7 @@ namespace ereignis
     concept callback = requires(T t) { std::function{t}; };
 
     template <typename Callback, typename... T>
-    concept argument = requires(Callback &callback, T &&...t) { callback(std::forward<T>(t)...); };
+    concept valid_arguments = requires(Callback &callback, T &&...t) { callback(std::forward<T>(t)...); };
 
     template <auto Id, callback Callback> class event
     {
@@ -26,15 +26,15 @@ namespace ereignis
 
       public:
         void remove(std::size_t id);
-        std::size_t add(callback auto callback);
+        std::size_t add(callback auto &&callback);
 
       public:
         template <typename... T>
-            requires argument<Callback, T...>
+            requires valid_arguments<Callback, T...>
         auto fire(T &&...args);
 
         template <typename... T>
-            requires argument<Callback, T...>
+            requires valid_arguments<Callback, T...>
         auto fire(T &&...args) const;
 
       public:
