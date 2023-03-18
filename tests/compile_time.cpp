@@ -29,11 +29,11 @@ TEST_CASE("Perform compile time checks", "[constexpr]")
     static_assert(std::ranges::view<invoker>);
     static_assert(std::forward_iterator<iterator>);
 
-    static_assert(std::is_same_v<event_manager::type_t<0>, void()>);
+    static_assert(std::is_same_v<event_manager::type_t<0>, std::function<void()>>);
 
-    static_assert(std::is_same_v<std::function<event_manager::type_t<0>>::result_type, void>);
-    static_assert(std::is_same_v<std::function<event_manager::type_t<1>>::result_type, int>);
+    static_assert(std::is_same_v<event_manager::type_t<0>::result_type, void>);
+    static_assert(std::is_same_v<event_manager::type_t<1>::result_type, int>);
 
-    static_assert(std::is_same_v<std::function<event_manager_with_enums::type_t<enum_ids::one>>::result_type, void>);
-    static_assert(std::is_same_v<std::function<event_manager_with_enums::type_t<enum_ids::two>>::result_type, int>);
+    static_assert(std::is_same_v<event_manager_with_enums::type_t<enum_ids::one>::result_type, void>);
+    static_assert(std::is_same_v<event_manager_with_enums::type_t<enum_ids::two>::result_type, int>);
 }
