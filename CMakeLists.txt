@@ -5,7 +5,7 @@ project(ereignis LANGUAGES CXX VERSION 1.2)
 # Library options
 # --------------------------------------------------------------------------------------------------------
 
-option(ereignis_tests "Run tests" ON)
+option(ereignis_tests "Run tests" OFF)
 
 # --------------------------------------------------------------------------------------------------------
 # Create library
