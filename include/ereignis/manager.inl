@@ -67,7 +67,7 @@ namespace ereignis
     template <ereignis_event... events> template <auto Id, std::size_t I> consteval auto manager<events...>::type()
     {
         return []<auto EventId, callback Callback>(event<EventId, Callback> &) { //
-            return std::type_identity<std::function<std::decay_t<Callback>>>{};
+            return std::type_identity<Callback>{};
         }(manager<events...>{}.at<Id>());
     }
 } // namespace ereignis
