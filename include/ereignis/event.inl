@@ -15,7 +15,10 @@ namespace ereignis
         m_callbacks.erase(id);
     }
 
-    template <auto Id, callback Callback> std::size_t event<Id, Callback>::add(callback auto &&callback)
+    template <auto Id, callback Callback>
+    template <typename T>
+        requires valid_callback<Callback, T>
+    std::size_t event<Id, Callback>::add(T &&callback)
     {
         std::lock_guard lock(m_mutex);
 
@@ -30,7 +33,7 @@ namespace ereignis
         requires valid_arguments<Callback, T...>
     auto event<Id, Callback>::fire(T &&...args)
     {
-        using return_t = typename std::decay_t<decltype(m_callbacks.at(0))>::result_type;
+        using return_t = std::invoke_result_t<Callback, T...>;
 
         if constexpr (std::is_same_v<return_t, void>)
         {
