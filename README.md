@@ -7,7 +7,7 @@
 <br/>
 
 <p align="center">
-    A thread-safe C++17 Event Library
+    A thread-safe C++20 Event Library
 </p>
 
 <hr/>
@@ -60,12 +60,11 @@ When the specified callback does not return `void` it is possible to iteratively
   ```cpp
   #include <ereignis/manager.hpp>
 
-  using ereignis::event_manager;
   using ereignis::event;
 
-  auto manager = event_manager<
+  ereignis::manager<
     event<0, void(int)>
-  >;
+  > manager;
 
   manager.at<0>().add([](int i) { std::cout << i << std::endl; });
   manager.at<0>().fire(1337);
@@ -80,12 +79,11 @@ When the specified callback does not return `void` it is possible to iteratively
     close
   };
 
-  using ereignis::event_manager;
   using ereignis::event;
 
-  auto manager = event_manager<
+  ereignis::manager<
     event<window_event::close, bool()>
-  >;
+  > manager;
 
   manager.at<window_event::close>().add([]() -> bool { return true; });
   
