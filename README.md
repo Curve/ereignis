@@ -1,4 +1,3 @@
-<hr/>
 
 <div align="center"> 
     <img src="assets/logo.png" height=312>
@@ -12,23 +11,24 @@
 
 <hr/>
 
-<div align="center">
-
 ### Description
 
 <div align="left">
 
-_Ereignis_ is a library that implements an easy to use Event/Callback mechanism.  
-With _Ereignis_ it's possible to (un)register callbacks to an `event_manager`, clear all the registered callbacks and also `fire` a specific event, which in turn will invoke all registered callbacks.  
-When the specified callback does not return `void` it is possible to iteratively invoke the callbacks and receive their result.
+_Ereignis_ is a library that implements an easy to use Event/Callback mechanism that allows for lazy-evaluation of the the results returned by `fire`.
 
 </div>
 
 ### Installation
 
+> **Note**  
+> This library requires a C++20 capable compiler.
+> In case you need support for C++17 checkout [version 1.2](https://github.com/Soundux/ereignis/releases/tag/v1.1)
+
 <div align="left">
 
 - With FetchContent
+
   ```cmake
   include(FetchContent)
 
@@ -37,7 +37,9 @@ When the specified callback does not return `void` it is possible to iteratively
 
   target_link_libraries(<target> ereignis)
   ```
+
 - As Git-Submodule
+
   ```bash
   $ git clone https://github.com/Soundux/ereignis
   ```
@@ -57,6 +59,7 @@ When the specified callback does not return `void` it is possible to iteratively
 <div align="left">
 
 * Basic callback
+
   ```cpp
   #include <ereignis/manager.hpp>
 
@@ -71,6 +74,7 @@ When the specified callback does not return `void` it is possible to iteratively
   ```
 
 * Result iteration
+
   ```cpp
   #include <ereignis/manager.hpp>
 
@@ -105,5 +109,3 @@ When the specified callback does not return `void` it is possible to iteratively
 
   // 'Reached!' will never be printed.
   ```
-
-</div>
