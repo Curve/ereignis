@@ -17,7 +17,8 @@ namespace ereignis
     template <typename Callback, typename... T>
     concept valid_arguments = requires(Callback callback, T &&...args) { callback(std::forward<T>(args)...); };
 
-    template <auto Id, callback Callback> class event
+    template <auto Id, callback Callback>
+    class event
     {
       private:
         std::mutex m_mutex;

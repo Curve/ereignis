@@ -1,6 +1,8 @@
 #pragma once
 #include "invoker.hpp"
 
+#include <iterator>
+
 namespace ereignis
 {
     template <callback_list T, typename... P>

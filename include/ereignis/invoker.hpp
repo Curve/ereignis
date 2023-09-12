@@ -2,17 +2,19 @@
 #include <map>
 #include <tuple>
 #include <ranges>
-#include <iterator>
 #include <functional>
-#include <type_traits>
 
 namespace ereignis
 {
     template <typename T>
-    concept callback_list = requires(T t) { []<typename A, typename B>(std::map<A, std::function<B>> &) {}(t); };
+    concept callback_list = requires(T t) {
+        []<typename A, typename B>(std::map<A, std::function<B>> &) {
+        }(t);
+    };
 
     template <typename T, typename... P>
-    concept callback_parameters = requires(T t, std::tuple<P...> p) { callback_list<T>, std::apply(t.begin()->second, p); };
+    concept callback_parameters =
+        requires(T t, std::tuple<P...> p) { callback_list<T>, std::apply(t.begin()->second, p); };
 
     template <callback_list T, typename... P>
         requires callback_parameters<T, P...>
