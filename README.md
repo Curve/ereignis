@@ -23,7 +23,7 @@ _Ereignis_ is a library that implements an easy to use Event/Callback mechanism 
 
 > **Note**  
 > This library requires a C++20 capable compiler.
-> In case you need support for C++17 checkout [version 1.2](https://github.com/Soundux/ereignis/releases/tag/v1.1)
+> In case you need support for C++17 checkout [version 1.2](https://github.com/Curve/ereignis/releases/tag/v1.1)
 
 <div align="left">
 
@@ -32,7 +32,7 @@ _Ereignis_ is a library that implements an easy to use Event/Callback mechanism 
   ```cmake
   include(FetchContent)
 
-  FetchContent_Declare(ereignis GIT_REPOSITORY "https://github.com/Soundux/ereignis")
+  FetchContent_Declare(ereignis GIT_REPOSITORY "https://github.com/Curve/ereignis")
   FetchContent_MakeAvailable(ereignis)
 
   target_link_libraries(<target> ereignis)
@@ -41,7 +41,7 @@ _Ereignis_ is a library that implements an easy to use Event/Callback mechanism 
 - As Git-Submodule
 
   ```bash
-  $ git clone https://github.com/Soundux/ereignis
+  $ git clone https://github.com/Curve/ereignis
   ```
   ```cmake
   add_subdirectory(ereignis)
