@@ -25,9 +25,27 @@ namespace ereignis
         std::lock_guard lock(m_mutex);
 
         auto id = ++m_counter;
-        m_callbacks.emplace(id, std::forward<decltype(callback)>(callback));
+        m_callbacks.emplace(id, std::forward<T>(callback));
 
         return id;
+    }
+
+    template <auto Id, callback Callback>
+    template <typename T>
+        requires valid_callback<Callback, T>
+    void event<Id, Callback>::once(T &&callback)
+    {
+        std::lock_guard lock(m_mutex);
+
+        auto id = ++m_counter;
+
+        auto handler = [this, id, callback = std::forward<T>(callback)]<typename... A>(A &&...args)
+        {
+            remove(id);
+            callback(std::forward<A>(args)...);
+        };
+
+        m_callbacks.emplace(id, std::move(handler));
     }
 
     template <auto Id, callback Callback>

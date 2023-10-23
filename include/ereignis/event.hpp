@@ -36,6 +36,10 @@ namespace ereignis
             requires valid_callback<Callback, T>
         std::size_t add(T &&callback);
 
+        template <typename T>
+            requires valid_callback<Callback, T>
+        void once(T &&callback);
+
       public:
         template <typename... T>
             requires valid_arguments<Callback, T...>
