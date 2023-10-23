@@ -12,9 +12,9 @@ namespace ereignis
         using iterator_t = typename T::iterator;
 
       public:
-        using value_type = typename T::mapped_type::result_type;
+        using value_type        = typename T::mapped_type::result_type;
         using iterator_category = std::forward_iterator_tag;
-        using difference_type = std::ptrdiff_t;
+        using difference_type   = std::ptrdiff_t;
 
       private:
         iterator_t m_iterator;
