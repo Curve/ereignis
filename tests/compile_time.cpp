@@ -1,6 +1,8 @@
 #include <boost/ut.hpp>
 #include <ereignis/manager.hpp>
 
+#include <concepts>
+
 using namespace boost::ut;
 using namespace boost::ut::bdd;
 
@@ -26,17 +28,18 @@ suite<"constexpr"> constexpr_suite = []()
         >;
 
     event_manager dummy{};
+
     using invoker = decltype(dummy.at<1>().fire());
     using iterator = decltype(dummy.at<1>().fire().begin());
 
-    expect(std::ranges::view<invoker>);
-    expect(std::forward_iterator<iterator>);
+    static_assert(std::ranges::view<invoker>);
+    static_assert(std::forward_iterator<iterator>);
 
-    expect(std::is_same_v<event_manager::type_t<0>, std::function<void()>>);
+    static_assert(std::same_as<typename event_manager::type_t<0>, std::function<void()>>);
 
-    expect(std::is_same_v<event_manager::type_t<0>::result_type, void>);
-    expect(std::is_same_v<event_manager::type_t<1>::result_type, int>);
+    static_assert(std::same_as<typename event_manager::type_t<0>::result_type, void>);
+    static_assert(std::same_as<typename event_manager::type_t<1>::result_type, int>);
 
-    expect(std::is_same_v<event_manager_with_enums::type_t<enum_ids::one>::result_type, void>);
-    expect(std::is_same_v<event_manager_with_enums::type_t<enum_ids::two>::result_type, int>);
+    static_assert(std::same_as<typename event_manager_with_enums::type_t<enum_ids::one>::result_type, void>);
+    static_assert(std::same_as<typename event_manager_with_enums::type_t<enum_ids::two>::result_type, int>);
 };

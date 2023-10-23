@@ -4,6 +4,7 @@
 #include <map>
 #include <mutex>
 #include <atomic>
+#include <cstdint>
 #include <functional>
 
 namespace ereignis
