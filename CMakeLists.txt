@@ -28,7 +28,7 @@ target_include_directories(${PROJECT_NAME} INTERFACE "include")
 # --------------------------------------------------------------------------------------------------------
     
 if (ereignis_tests)
-  message(STATUS "[ereignis] Building Examples")
+  message(STATUS "[ereignis] Building Tests")
   add_subdirectory(tests)
 endif()
 
