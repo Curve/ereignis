@@ -29,17 +29,17 @@ suite<"constexpr"> constexpr_suite = []()
 
     event_manager dummy{};
 
-    using invoker = decltype(dummy.at<1>().fire());
+    using invoker  = decltype(dummy.at<1>().fire());
     using iterator = decltype(dummy.at<1>().fire().begin());
 
-    static_assert(std::ranges::view<invoker>);
-    static_assert(std::forward_iterator<iterator>);
+    expect(std::ranges::view<invoker>);
+    expect(std::forward_iterator<iterator>);
 
-    static_assert(std::same_as<typename event_manager::type_t<0>, std::function<void()>>);
+    expect(std::same_as<event_manager::type_t<0>, std::function<void()>>);
 
-    static_assert(std::same_as<typename event_manager::type_t<0>::result_type, void>);
-    static_assert(std::same_as<typename event_manager::type_t<1>::result_type, int>);
+    expect(std::same_as<event_manager::type_t<0>::result_type, void>);
+    expect(std::same_as<event_manager::type_t<1>::result_type, int>);
 
-    static_assert(std::same_as<typename event_manager_with_enums::type_t<enum_ids::one>::result_type, void>);
-    static_assert(std::same_as<typename event_manager_with_enums::type_t<enum_ids::two>::result_type, int>);
+    expect(std::same_as<event_manager_with_enums::type_t<enum_ids::one>::result_type, void>);
+    expect(std::same_as<event_manager_with_enums::type_t<enum_ids::two>::result_type, int>);
 };
