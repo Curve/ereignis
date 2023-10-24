@@ -22,9 +22,9 @@ suite<"constexpr"> constexpr_suite = []()
         event<1, int()>                      //
         >;
 
-    using event_manager_with_enums = ereignis::manager< //
-        event<enum_ids::one, void()>,                   //
-        event<enum_ids::two, int()>                     //
+    using another_manager = ereignis::manager< //
+        event<enum_ids::one, void()>,          //
+        event<enum_ids::two, int()>            //
         >;
 
     event_manager dummy{};
@@ -40,6 +40,6 @@ suite<"constexpr"> constexpr_suite = []()
     expect(std::same_as<event_manager::type_t<0>::result_type, void>);
     expect(std::same_as<event_manager::type_t<1>::result_type, int>);
 
-    expect(std::same_as<event_manager_with_enums::type_t<enum_ids::one>::result_type, void>);
-    expect(std::same_as<event_manager_with_enums::type_t<enum_ids::two>::result_type, int>);
+    expect(std::same_as<another_manager::template type_t<enum_ids::one>::result_type, void>);
+    expect(std::same_as<another_manager::template type_t<enum_ids::two>::result_type, int>);
 };
