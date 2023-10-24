@@ -42,7 +42,7 @@ namespace ereignis
         auto handler = [this, id, callback = std::forward<T>(callback)]<typename... A>(A &&...args)
         {
             remove(id);
-            callback(std::forward<A>(args)...);
+            return callback(std::forward<A>(args)...);
         };
 
         m_callbacks.emplace(id, std::move(handler));
