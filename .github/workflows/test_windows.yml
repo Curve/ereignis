@@ -26,4 +26,4 @@ jobs:
         run: "mkdir build && cd build && cmake .. -Dereignis_tests=ON && cmake --build . --config Debug"
 
       - name: Run Tests
-        run: "D:\\a\\ereignis\\ereignis\\build\\Debug\\tests\\ereignis-tests"
+        run: "D:\\a\\ereignis\\ereignis\\build\\Debug\\tests\\ereignis-tests.exe"
