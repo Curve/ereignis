@@ -23,7 +23,7 @@ suite<"runtime"> runtime_suite = []()
 
     event_manager.at<0>().add([&] { first_call_count++; });
 
-    auto id = event_manager.at<0>().add([&] { first_call_count++; });
+    auto id  = event_manager.at<0>().add([&] { first_call_count++; });
     auto id2 = event_manager.at<0>().add([&] { first_call_count++; });
 
     event_manager.at<0>().fire();
@@ -47,7 +47,36 @@ suite<"runtime"> runtime_suite = []()
     event_manager.at<1>().add([] { return 10; });
     expect(eq(*event_manager.at<1>().fire().begin(), 10));
 
+    std::size_t second_call_count{0};
+
+    event_manager.at<1>().add(
+        [&]
+        {
+            second_call_count++;
+            return 0;
+        });
+
+    event_manager.at<1>().add(
+        [&]
+        {
+            second_call_count++;
+            return 1;
+        });
+
+    event_manager.at<1>().add(
+        [&]
+        {
+            second_call_count++;
+            return 2;
+        });
+
+    auto res = event_manager.at<1>().until(1);
+
+    expect(res.has_value() && eq(res.value(), 1));
+    expect(eq(second_call_count, 2));
+
     std::vector<int> args{0, 2, 4, 5, 6, 7};
+
     event_manager.at<2>().add([](int i) { return (i % 1) == 0; });
     event_manager.at<2>().add([](int i) { return (i % 2) == 0; });
 

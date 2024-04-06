@@ -1,5 +1,7 @@
 #pragma once
+
 #include "event.hpp"
+#include "invoker.hpp"
 
 namespace ereignis
 {
@@ -51,11 +53,9 @@ namespace ereignis
     template <auto Id, callback Callback>
     template <typename... T>
         requires valid_arguments<Callback, T...>
-    auto event<Id, Callback>::fire(T &&...args)
+    auto event<Id, Callback>::fire(T &&...args) const
     {
-        using return_t = std::invoke_result_t<Callback, T...>;
-
-        if constexpr (std::is_same_v<return_t, void>)
+        if constexpr (std::is_void_v<result_t>)
         {
             const auto copy = m_callbacks;
 
@@ -71,24 +71,21 @@ namespace ereignis
     }
 
     template <auto Id, callback Callback>
-    template <typename... T>
-        requires valid_arguments<Callback, T...>
-    auto event<Id, Callback>::fire(T &&...args) const
+    template <typename U, typename... T>
+        requires valid_arguments<Callback, T...> and
+                 std::equality_comparable_with<typename event<Id, Callback>::result_t, U>
+    std::optional<typename event<Id, Callback>::result_t> event<Id, Callback>::until(U &&result, T &&...args) const
     {
-        using return_t = std::invoke_result_t<Callback, T...>;
+        const auto copy = m_callbacks;
 
-        if constexpr (std::is_same_v<return_t, void>)
+        for (const auto &[key, callback] : copy)
         {
-            const auto copy = m_callbacks;
-
-            for (const auto &[key, callback] : copy)
+            if (auto res = callback(args...); res == result)
             {
-                callback(args...);
+                return res;
             }
         }
-        else
-        {
-            return invoker(m_callbacks, std::make_tuple(std::forward<T>(args)...));
-        }
+
+        return std::nullopt;
     }
 } // namespace ereignis

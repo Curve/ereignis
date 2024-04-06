@@ -30,10 +30,12 @@ suite<"constexpr"> constexpr_suite = []()
     event_manager dummy{};
 
     using invoker  = decltype(dummy.at<1>().fire());
+    using until    = decltype(dummy.at<1>().until(1));
     using iterator = decltype(dummy.at<1>().fire().begin());
 
     expect(std::ranges::view<invoker>);
     expect(std::forward_iterator<iterator>);
+    expect(std::same_as<until, std::optional<int>>);
 
     expect(std::same_as<event_manager::type_t<0>, std::function<void()>>);
 
