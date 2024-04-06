@@ -44,10 +44,6 @@ namespace ereignis
       public:
         template <typename... T>
             requires valid_arguments<Callback, T...>
-        auto fire(T &&...args);
-
-        template <typename... T>
-            requires valid_arguments<Callback, T...>
         auto fire(T &&...args) const;
 
       public:
