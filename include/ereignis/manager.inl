@@ -1,7 +1,7 @@
 #pragma once
+
 #include "manager.hpp"
 
-#include <variant>
 #include <concepts>
 #include <type_traits>
 

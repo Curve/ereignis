@@ -1,5 +1,8 @@
 #pragma once
+
 #include "event.hpp"
+
+#include <tuple>
 
 namespace ereignis
 {
