@@ -21,13 +21,9 @@ namespace ereignis
     template <auto Id, callback Callback>
     class event
     {
-        using callback_t = std::function<Callback>;
-        using result_t   = callback_t::result_type;
-
-      private:
         std::mutex m_mutex;
         std::atomic_size_t m_counter{0};
-        std::map<std::size_t, callback_t> m_callbacks;
+        std::map<std::size_t, std::function<Callback>> m_callbacks;
 
       public:
         void clear();
@@ -50,8 +46,9 @@ namespace ereignis
         auto fire(T &&...args) const;
 
         template <typename U, typename... T>
-            requires valid_arguments<Callback, T...> and std::equality_comparable_with<result_t, U>
-        std::optional<result_t> until(U &&result, T &&...args) const;
+            requires valid_arguments<Callback, T...> and
+                     std::equality_comparable_with<std::invoke_result_t<Callback, T...>, U>
+        std::optional<std::invoke_result_t<Callback, T...>> until(U &&result, T &&...args) const;
 
       public:
         static constexpr auto id = Id;

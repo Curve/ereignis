@@ -55,6 +55,8 @@ namespace ereignis
         requires valid_arguments<Callback, T...>
     auto event<Id, Callback>::fire(T &&...args) const
     {
+        using result_t = std::invoke_result_t<Callback, T...>;
+
         if constexpr (std::is_void_v<result_t>)
         {
             const auto copy = m_callbacks;
@@ -73,8 +75,8 @@ namespace ereignis
     template <auto Id, callback Callback>
     template <typename U, typename... T>
         requires valid_arguments<Callback, T...> and
-                 std::equality_comparable_with<typename event<Id, Callback>::result_t, U>
-    std::optional<typename event<Id, Callback>::result_t> event<Id, Callback>::until(U &&result, T &&...args) const
+                 std::equality_comparable_with<std::invoke_result_t<Callback, T...>, U>
+    std::optional<std::invoke_result_t<Callback, T...>> event<Id, Callback>::until(U &&result, T &&...args) const
     {
         const auto copy = m_callbacks;
 
