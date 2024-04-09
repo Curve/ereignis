@@ -17,6 +17,10 @@ namespace ereignis
     {
         std::tuple<events...> m_events;
 
+      private:
+        template <typename T, typename Visitor>
+        void find(T, Visitor);
+
       public:
         template <auto Id, std::size_t I = 0>
         constexpr auto &at();

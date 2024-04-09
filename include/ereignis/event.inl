@@ -21,8 +21,8 @@ namespace ereignis
 
     template <auto Id, callback Callback>
     template <typename T>
-        requires std::constructible_from<typename event<Id, Callback>::callback_t, T>
     std::size_t event<Id, Callback>::add(T &&callback)
+        requires std::constructible_from<callback_t, T>
     {
         std::lock_guard lock(m_mutex);
 
@@ -34,8 +34,8 @@ namespace ereignis
 
     template <auto Id, callback Callback>
     template <typename T>
-        requires std::constructible_from<typename event<Id, Callback>::callback_t, T>
     void event<Id, Callback>::once(T &&callback)
+        requires std::constructible_from<callback_t, T>
     {
         std::lock_guard lock(m_mutex);
 
@@ -52,8 +52,8 @@ namespace ereignis
 
     template <auto Id, callback Callback>
     template <typename... T>
-        requires valid_arguments<Callback, T...>
     auto event<Id, Callback>::fire(T &&...args) const
+        requires valid_arguments<callback_t, T...>
     {
         if constexpr (std::is_void_v<result_t>)
         {
@@ -72,12 +72,9 @@ namespace ereignis
 
     template <auto Id, callback Callback>
     template <typename U, typename... T>
-        requires valid_arguments<Callback, T...> and
-                 std::equality_comparable_with<typename event<Id, Callback>::result_t, U>
-    auto event<Id, Callback>::until(U &&value, T &&...args) const
+    std::optional<typename event<Id, Callback>::result_t> event<Id, Callback>::until(U &&value, T &&...args) const
+        requires valid_arguments<callback_t, T...> and std::equality_comparable_with<result_t, U>
     {
-        std::optional<result_t> rtn;
-
         for (auto &&result : fire(std::forward<T>(args)...))
         {
             if (result != value)
@@ -85,10 +82,9 @@ namespace ereignis
                 continue;
             }
 
-            rtn.emplace(std::forward<decltype(result)>(result));
-            break;
+            return result;
         }
 
-        return rtn;
+        return std::nullopt;
     }
 } // namespace ereignis

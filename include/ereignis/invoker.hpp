@@ -14,8 +14,7 @@ namespace ereignis
     };
 
     template <typename T, typename... P>
-    concept callback_parameters =
-        requires(T t, std::tuple<P...> p) { callback_list<T>, std::apply(t.begin()->second, p); };
+    concept callback_parameters = requires(T t, std::tuple<P...> p) { std::apply(t.begin()->second, p); };
 
     template <callback_list T, typename... P>
         requires callback_parameters<T, P...>

@@ -3,6 +3,8 @@
 #include <map>
 #include <mutex>
 #include <atomic>
+
+#include <optional>
 #include <functional>
 
 namespace ereignis
@@ -32,21 +34,21 @@ namespace ereignis
 
       public:
         template <typename T>
-            requires std::constructible_from<callback_t, T>
-        std::size_t add(T &&callback);
+        std::size_t add(T &&callback)
+            requires std::constructible_from<callback_t, T>;
 
         template <typename T>
-            requires std::constructible_from<callback_t, T>
-        void once(T &&callback);
+        void once(T &&callback)
+            requires std::constructible_from<callback_t, T>;
 
       public:
         template <typename... T>
-            requires valid_arguments<Callback, T...>
-        auto fire(T &&...args) const;
+        auto fire(T &&...args) const
+            requires valid_arguments<callback_t, T...>;
 
         template <typename U, typename... T>
-            requires valid_arguments<Callback, T...> and std::equality_comparable_with<result_t, U>
-        auto until(U &&value, T &&...args) const;
+        std::optional<result_t> until(U &&value, T &&...args) const
+            requires valid_arguments<callback_t, T...> and std::equality_comparable_with<result_t, U>;
 
       public:
         static constexpr auto id = Id;

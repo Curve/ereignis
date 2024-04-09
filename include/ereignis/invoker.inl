@@ -49,6 +49,7 @@ namespace ereignis
         {
             auto copy = *this;
             m_iterator++;
+
             return copy;
         }
 
@@ -69,13 +70,13 @@ namespace ereignis
         requires callback_parameters<T, P...>
     auto invoker<T, P...>::begin()
     {
-        return iterator(m_callbacks.begin(), m_args);
+        return iterator{m_callbacks.begin(), m_args};
     }
 
     template <callback_list T, typename... P>
         requires callback_parameters<T, P...>
     auto invoker<T, P...>::end()
     {
-        return iterator(m_callbacks.end(), m_args);
+        return iterator{m_callbacks.end(), m_args};
     }
 } // namespace ereignis

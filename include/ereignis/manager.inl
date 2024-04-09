@@ -8,6 +8,29 @@
 namespace ereignis
 {
     template <ereignis_event... events>
+    template <typename T, typename Visitor>
+    void manager<events...>::find(T id, Visitor visitor)
+    {
+        std::apply(
+            [&](auto &...items)
+            {
+                auto unpack = [&]<auto Id, callback Callback>(ereignis::event<Id, Callback> &item)
+                {
+                    if constexpr (std::equality_comparable_with<decltype(Id), T>)
+                    {
+                        if (Id == id)
+                        {
+                            visitor(item);
+                        }
+                    }
+                };
+
+                (unpack(items), ...);
+            },
+            m_events);
+    }
+
+    template <ereignis_event... events>
     template <auto Id, std::size_t I>
     constexpr auto &manager<events...>::at()
     {
@@ -34,46 +57,14 @@ namespace ereignis
     template <typename T>
     void manager<events...>::clear(T event)
     {
-        std::apply(
-            [&](auto &...items)
-            {
-                auto unpack = [&]<auto Id, callback Callback>(ereignis::event<Id, Callback> &item)
-                {
-                    if constexpr (std::equality_comparable_with<decltype(Id), T>)
-                    {
-                        if (Id == event)
-                        {
-                            item.clear();
-                        }
-                    }
-                };
-
-                (unpack(items), ...);
-            },
-            m_events);
+        find(event, [](auto &&item) { item.clear(); });
     }
 
     template <ereignis_event... events>
     template <typename T>
     void manager<events...>::remove(T event, std::size_t id)
     {
-        std::apply(
-            [&](auto &...items)
-            {
-                auto unpack = [&]<auto Id, callback Callback>(ereignis::event<Id, Callback> &item)
-                {
-                    if constexpr (std::equality_comparable_with<decltype(Id), T>)
-                    {
-                        if (Id == event)
-                        {
-                            item.remove(id);
-                        }
-                    }
-                };
-
-                (unpack(items), ...);
-            },
-            m_events);
+        find(event, [id](auto &&item) { item.remove(id); });
     }
 
     template <ereignis_event... events>
