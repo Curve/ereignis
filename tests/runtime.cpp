@@ -70,9 +70,14 @@ suite<"runtime"> runtime_suite = []()
             return 2;
         });
 
-    auto res = event_manager.at<1>().until(1);
+    auto res_until = event_manager.at<1>().until(1);
 
-    expect(res.has_value() && eq(res.value(), 1));
+    expect(res_until.has_value() && eq(res_until.value(), 1));
+    expect(eq(second_call_count, 2));
+
+    auto res_during = event_manager.at<1>().during(0);
+
+    expect(res_during.has_value() && eq(res_during.value(), 10));
     expect(eq(second_call_count, 2));
 
     std::vector<int> args{0, 2, 4, 5, 6, 7};

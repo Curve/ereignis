@@ -50,6 +50,10 @@ namespace ereignis
         std::optional<result_t> until(U &&value, T &&...args) const
             requires valid_arguments<callback_t, T...> and std::equality_comparable_with<result_t, U>;
 
+        template <typename U, typename... T>
+        std::optional<result_t> during(U &&value, T &&...args) const
+            requires valid_arguments<callback_t, T...> and std::equality_comparable_with<result_t, U>;
+
       public:
         static constexpr auto id = Id;
     };

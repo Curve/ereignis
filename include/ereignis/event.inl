@@ -87,4 +87,22 @@ namespace ereignis
 
         return std::nullopt;
     }
+
+    template <auto Id, callback Callback>
+    template <typename U, typename... T>
+    std::optional<typename event<Id, Callback>::result_t> event<Id, Callback>::during(U &&value, T &&...args) const
+        requires valid_arguments<callback_t, T...> and std::equality_comparable_with<result_t, U>
+    {
+        for (auto &&result : fire(std::forward<T>(args)...))
+        {
+            if (result == value)
+            {
+                continue;
+            }
+
+            return result;
+        }
+
+        return std::nullopt;
+    }
 } // namespace ereignis
