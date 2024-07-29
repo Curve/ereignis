@@ -7,30 +7,25 @@
 
 namespace ereignis
 {
-    template <ereignis_event... events>
+    template <detail::ereignis_event... events>
     template <typename T, typename Visitor>
     void manager<events...>::find(T id, Visitor visitor)
     {
-        std::apply(
-            [&](auto &...items)
+        auto fn = [&]<auto Id, detail::callback Callback>(ereignis::event<Id, Callback> &item)
+        {
+            if constexpr (std::equality_comparable_with<decltype(Id), T>)
             {
-                auto unpack = [&]<auto Id, callback Callback>(ereignis::event<Id, Callback> &item)
+                if (Id == id)
                 {
-                    if constexpr (std::equality_comparable_with<decltype(Id), T>)
-                    {
-                        if (Id == id)
-                        {
-                            visitor(item);
-                        }
-                    }
-                };
+                    visitor(item);
+                }
+            }
+        };
 
-                (unpack(items), ...);
-            },
-            m_events);
+        std::apply([&]<typename... Ts>(Ts &&...items) { (fn(std::forward<Ts>(items)), ...); }, m_events);
     }
 
-    template <ereignis_event... events>
+    template <detail::ereignis_event... events>
     template <auto Id, std::size_t I>
     constexpr auto &manager<events...>::at()
     {
@@ -53,25 +48,25 @@ namespace ereignis
         }
     }
 
-    template <ereignis_event... events>
+    template <detail::ereignis_event... events>
     template <typename T>
     void manager<events...>::clear(T event)
     {
         find(event, [](auto &&item) { item.clear(); });
     }
 
-    template <ereignis_event... events>
+    template <detail::ereignis_event... events>
     template <typename T>
     void manager<events...>::remove(T event, std::size_t id)
     {
         find(event, [id](auto &&item) { item.remove(id); });
     }
 
-    template <ereignis_event... events>
+    template <detail::ereignis_event... events>
     template <auto Id, std::size_t I>
     consteval auto manager<events...>::type()
     {
-        return []<auto EventId, callback Callback>(event<EventId, Callback> &) { //
+        return []<auto EventId, detail::callback Callback>(event<EventId, Callback> &) { //
             return std::type_identity<std::function<Callback>>{};
         }(manager<events...>{}.at<Id>());
     }

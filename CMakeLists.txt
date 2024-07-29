@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(ereignis LANGUAGES CXX VERSION 3.1)
+project(ereignis LANGUAGES CXX VERSION 4.0)
 
 # --------------------------------------------------------------------------------------------------------
 # Library options
@@ -14,11 +14,25 @@ option(ereignis_tests "Build tests" OFF)
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(cr::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20 CXX_EXTENSIONS OFF CXX_STANDARD_REQUIRED ON)
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_23)
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 23 CXX_EXTENSIONS OFF CXX_STANDARD_REQUIRED ON)
 
 # --------------------------------------------------------------------------------------------------------
-# Include "include" folder
+# Setup Dependencies
+# --------------------------------------------------------------------------------------------------------
+
+include("cmake/cpm.cmake")
+
+CPMFindPackage(
+  NAME           lockpp
+  VERSION        3.0
+  GIT_REPOSITORY "https://github.com/Curve/lockpp"
+)
+
+target_link_libraries(${PROJECT_NAME} INTERFACE cr::lockpp)
+
+# --------------------------------------------------------------------------------------------------------
+# Include directories
 # --------------------------------------------------------------------------------------------------------
 
 target_include_directories(${PROJECT_NAME} INTERFACE "include")

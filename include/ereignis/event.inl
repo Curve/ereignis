@@ -1,45 +1,43 @@
 #pragma once
 
 #include "event.hpp"
-#include "invoker.hpp"
 
 namespace ereignis
 {
-    template <auto Id, callback Callback>
+    template <auto Id, detail::callback Callback>
     void event<Id, Callback>::clear()
     {
-        std::lock_guard lock(m_mutex);
-        m_callbacks.clear();
+        auto locked = m_callbacks.write();
+        locked->clear();
     }
 
-    template <auto Id, callback Callback>
+    template <auto Id, detail::callback Callback>
     void event<Id, Callback>::remove(std::size_t id)
     {
-        std::lock_guard lock(m_mutex);
-        m_callbacks.erase(id);
+        auto locked = m_callbacks.write();
+        locked->erase(id);
     }
 
-    template <auto Id, callback Callback>
+    template <auto Id, detail::callback Callback>
     template <typename T>
     std::size_t event<Id, Callback>::add(T &&callback)
         requires std::constructible_from<callback_t, T>
     {
-        std::lock_guard lock(m_mutex);
+        auto locked = m_callbacks.write();
 
         auto id = ++m_counter;
-        m_callbacks.emplace(id, std::forward<T>(callback));
+        locked->emplace(id, std::forward<T>(callback));
 
         return id;
     }
 
-    template <auto Id, callback Callback>
+    template <auto Id, detail::callback Callback>
     template <typename T>
     void event<Id, Callback>::once(T &&callback)
         requires std::constructible_from<callback_t, T>
     {
-        std::lock_guard lock(m_mutex);
-
-        auto id = ++m_counter;
+        auto locked = m_callbacks.write();
+        auto id     = ++m_counter;
 
         auto handler = [this, id, callback = std::forward<T>(callback)]<typename... A>(A &&...args)
         {
@@ -47,33 +45,39 @@ namespace ereignis
             return callback(std::forward<A>(args)...);
         };
 
-        m_callbacks.emplace(id, std::move(handler));
+        locked->emplace(id, std::move(handler));
     }
 
-    template <auto Id, callback Callback>
+    template <auto Id, detail::callback Callback>
     template <typename... T>
-    auto event<Id, Callback>::fire(T &&...args) const
-        requires valid_arguments<callback_t, T...>
+    std::generator<typename event<Id, Callback>::result_t> event<Id, Callback>::fire(T &&...args) const
+        requires detail::valid_arguments<callback_t, T...>
     {
-        if constexpr (std::is_void_v<result_t>)
-        {
-            const auto copy = m_callbacks;
+        auto callbacks = m_callbacks.copy();
 
-            for (const auto &[key, callback] : copy)
-            {
-                callback(args...);
-            }
-        }
-        else
+        for (const auto &[key, callback] : callbacks)
         {
-            return invoker(m_callbacks, std::make_tuple(std::forward<T>(args)...));
+            co_yield std::invoke(callback, std::forward<T>(args)...);
         }
     }
 
-    template <auto Id, callback Callback>
+    template <auto Id, detail::callback Callback>
+    template <typename... T>
+    void event<Id, Callback>::fire(T &&...args) const
+        requires detail::valid_arguments<callback_t, T...> and std::is_void_v<result_t>
+    {
+        auto callbacks = m_callbacks.copy();
+
+        for (const auto &[key, callback] : callbacks)
+        {
+            std::invoke(callback, std::forward<T>(args)...);
+        }
+    }
+
+    template <auto Id, detail::callback Callback>
     template <typename U, typename... T>
     std::optional<typename event<Id, Callback>::result_t> event<Id, Callback>::until(U &&value, T &&...args) const
-        requires valid_arguments<callback_t, T...> and std::equality_comparable_with<result_t, U>
+        requires detail::valid_arguments<callback_t, T...> and std::equality_comparable_with<result_t, U>
     {
         for (auto &&result : fire(std::forward<T>(args)...))
         {
@@ -88,10 +92,10 @@ namespace ereignis
         return std::nullopt;
     }
 
-    template <auto Id, callback Callback>
+    template <auto Id, detail::callback Callback>
     template <typename U, typename... T>
     std::optional<typename event<Id, Callback>::result_t> event<Id, Callback>::during(U &&value, T &&...args) const
-        requires valid_arguments<callback_t, T...> and std::equality_comparable_with<result_t, U>
+        requires detail::valid_arguments<callback_t, T...> and std::equality_comparable_with<result_t, U>
     {
         for (auto &&result : fire(std::forward<T>(args)...))
         {

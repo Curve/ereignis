@@ -6,13 +6,16 @@
 
 namespace ereignis
 {
-    template <typename T>
-    concept ereignis_event = requires(T t) {
-        []<auto Id, callback Callback>(event<Id, Callback> &) {
-        }(t);
-    };
+    namespace detail
+    {
+        template <typename T>
+        concept ereignis_event = requires(T t) {
+            []<auto Id, callback Callback>(event<Id, Callback> &) {
+            }(t);
+        };
+    } // namespace detail
 
-    template <ereignis_event... events>
+    template <detail::ereignis_event... events>
     class manager
     {
         std::tuple<events...> m_events;
