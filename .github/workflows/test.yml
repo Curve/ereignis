@@ -1,0 +1,46 @@
+on:
+  workflow_dispatch:
+  push:
+    branches: ["**"]
+    paths-ignore:
+      - "**/*.md"
+
+name: 🧪 Run Tests
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+
+      matrix:
+        config: [Release, Debug]
+        type: [gcc, clang, msvc]
+
+        include:
+          - type: gcc
+            container: archlinux:base-devel
+            deps: pacman --noconfirm -Syu git cmake gcc ninja make
+
+          - type: clang
+            container: archlinux:base-devel
+            deps: pacman --noconfirm -Syu git cmake clang ninja make
+
+    runs-on: ${{ (contains(matrix.type, 'msvc') || contains(matrix.type, 'clang-cl')) && 'windows-latest' || 'ubuntu-latest' }}
+    container: ${{ matrix.container }}
+
+    name: "${{ matrix.type }} (⚙️: ${{ matrix.config }})"
+
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🧰 Dependencies
+        run: ${{ matrix.deps }}
+
+      - name: 🔧 Compile
+        run: |
+          cmake -B build -Dereignis_tests=ON ${{ matrix.cmake_args }}
+          cmake --build build --config ${{ matrix.config }}
+
+      - name: 🔬 Run Tests
+        run: |
+          ctest --test-dir build/tests -C ${{ matrix.config }} --verbose
