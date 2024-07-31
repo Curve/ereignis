@@ -51,7 +51,7 @@ namespace ereignis
     void event<Id, Callback>::fire(Ts &&...args)
         requires std::is_void_v<result_type> and std::invocable<callback_type, Ts...>
     {
-        std::map<std::size_t, callback_type> copy = [this]()
+        auto copy = [this]()
         {
             std::lock_guard lock{m_mutex};
             return m_callbacks;
