@@ -20,6 +20,9 @@ namespace ereignis
 
         template <typename T>
         concept event = requires() { requires is_event<T>::value; };
+
+        template <auto Id, event... events>
+        consteval auto type();
     } // namespace impl
 
     template <impl::event... events>
@@ -30,9 +33,6 @@ namespace ereignis
       private:
         template <typename T, typename Visitor>
         constexpr void find(T, Visitor &&);
-
-        template <auto Id>
-        static consteval auto identity();
 
       public:
         template <auto Id>
@@ -47,7 +47,7 @@ namespace ereignis
 
       public:
         template <auto Id>
-        using type = decltype(identity<Id>())::type;
+        using type = decltype(impl::type<Id, events...>())::type;
     };
 } // namespace ereignis
 

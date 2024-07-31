@@ -11,7 +11,14 @@ namespace ereignis
     {
         template <std::integral auto T>
         using constant = std::integral_constant<decltype(T), T>;
-    }
+
+        template <auto Id, event... events>
+        consteval auto type()
+        {
+            using event = std::decay_t<decltype(manager<events...>{}.template at<Id>())>;
+            return std::type_identity<typename event::callback_type>{};
+        }
+    } // namespace impl
 
     template <impl::event... events>
     template <typename T, typename Visitor>
@@ -32,14 +39,6 @@ namespace ereignis
         };
 
         std::apply([&fn]<typename... Ts>(Ts &...items) { (fn(items), ...); }, m_events);
-    }
-
-    template <impl::event... events>
-    template <auto Id>
-    consteval auto manager<events...>::identity()
-    {
-        using event = std::decay_t<decltype(manager<events...>{}.template at<Id>())>;
-        return std::type_identity<typename event::callback_type>{};
     }
 
     template <impl::event... events>
