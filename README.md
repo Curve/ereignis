@@ -6,57 +6,41 @@
 <br/>
 
 <p align="center">
-    A thread-safe C++20 Event Library
+    A thread-safe C++23 Event Library
 </p>
 
 <hr/>
 
-### Description
-
-<div align="left">
+## 📖 Description
 
 _Ereignis_ is a library that implements an easy to use Event/Callback mechanism that allows for lazy-evaluation of the the results returned by `fire`.
 
-</div>
+## 📦 Installation
 
-### Installation
+> [!NOTE]  
+> This library requires a C++23 capable compiler.
+> See versions `< v4.0` for C++20 support and `< 2.0` for C++17 support.
 
-> **Note**  
-> This library requires a C++20 capable compiler.
-> In case you need support for C++17 checkout [version 1.2](https://github.com/Curve/ereignis/releases/tag/v1.1)
+* Using [CPM](https://github.com/cpm-cmake/CPM.cmake)
+  ```cmake
+  CPMFindPackage(
+    NAME           ereignis
+    VERSION        4.0
+    GIT_REPOSITORY "https://github.com/Curve/ereignis"
+  )
+  ```
 
-<div align="left">
-
-- With FetchContent
-
+* Using FetchContent
   ```cmake
   include(FetchContent)
 
-  FetchContent_Declare(ereignis GIT_REPOSITORY "https://github.com/Curve/ereignis")
+  FetchContent_Declare(ereignis GIT_REPOSITORY "https://github.com/Curve/ereignis" GIT_TAG v4.0)
   FetchContent_MakeAvailable(ereignis)
 
-  target_link_libraries(<target> ereignis)
+  target_link_libraries(<target> cr::ereignis)
   ```
 
-- As Git-Submodule
-
-  ```bash
-  $ git clone https://github.com/Curve/ereignis
-  ```
-  ```cmake
-  add_subdirectory(ereignis)
-  target_link_libraries(<target> ereignis)
-  ```
-
-
-</div>
-
-<br>
-
-### Usage examples
-
-
-<div align="left">
+## 📃 Usage
 
 * Basic callback
 
