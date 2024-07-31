@@ -5,77 +5,79 @@
 
 namespace ereignis
 {
-    template <auto Id, callback Callback>
+    template <auto Id, impl::storable Callback>
     void event<Id, Callback>::clear()
     {
-        std::lock_guard lock(m_mutex);
+        std::lock_guard lock{m_mutex};
         m_callbacks.clear();
     }
 
-    template <auto Id, callback Callback>
+    template <auto Id, impl::storable Callback>
     void event<Id, Callback>::remove(std::size_t id)
     {
-        std::lock_guard lock(m_mutex);
+        std::lock_guard lock{m_mutex};
         m_callbacks.erase(id);
     }
 
-    template <auto Id, callback Callback>
-    template <typename T>
-    std::size_t event<Id, Callback>::add(T &&callback)
-        requires std::constructible_from<callback_t, T>
+    template <auto Id, impl::storable Callback>
+    void event<Id, Callback>::once(callback_type callback)
     {
-        std::lock_guard lock(m_mutex);
-
-        auto id = ++m_counter;
-        m_callbacks.emplace(id, std::forward<T>(callback));
-
-        return id;
-    }
-
-    template <auto Id, callback Callback>
-    template <typename T>
-    void event<Id, Callback>::once(T &&callback)
-        requires std::constructible_from<callback_t, T>
-    {
-        std::lock_guard lock(m_mutex);
+        std::lock_guard lock{m_mutex};
 
         auto id = ++m_counter;
 
-        auto handler = [this, id, callback = std::forward<T>(callback)]<typename... A>(A &&...args)
+        auto handler = [this, id, callback = std::move(callback)]<typename... Ts>(Ts &&...args)
         {
             remove(id);
-            return callback(std::forward<A>(args)...);
+            return callback(std::forward<Ts>(args)...);
         };
 
         m_callbacks.emplace(id, std::move(handler));
     }
 
-    template <auto Id, callback Callback>
-    template <typename... T>
-    auto event<Id, Callback>::fire(T &&...args) const
-        requires valid_arguments<callback_t, T...>
+    template <auto Id, impl::storable Callback>
+    std::size_t event<Id, Callback>::add(callback_type callback)
     {
-        if constexpr (std::is_void_v<result_t>)
-        {
-            const auto copy = m_callbacks;
+        std::lock_guard lock{m_mutex};
 
-            for (const auto &[key, callback] : copy)
-            {
-                callback(args...);
-            }
-        }
-        else
+        auto id = ++m_counter;
+        m_callbacks.emplace(id, std::move(callback));
+
+        return id;
+    }
+
+    template <auto Id, impl::storable Callback>
+    template <typename... Ts>
+    void event<Id, Callback>::fire(Ts &&...args)
+        requires std::is_void_v<result_type> and std::invocable<callback_type, Ts...>
+    {
+        std::map<std::size_t, callback_type> copy = [this]()
         {
-            return invoker(m_callbacks, std::make_tuple(std::forward<T>(args)...));
+            std::lock_guard lock{m_mutex};
+            return m_callbacks;
+        }();
+
+        for (auto &[_, callback] : copy)
+        {
+            std::invoke(callback, std::forward<Ts>(args)...);
         }
     }
 
-    template <auto Id, callback Callback>
-    template <typename U, typename... T>
-    std::optional<typename event<Id, Callback>::result_t> event<Id, Callback>::until(U &&value, T &&...args) const
-        requires valid_arguments<callback_t, T...> and std::equality_comparable_with<result_t, U>
+    template <auto Id, impl::storable Callback>
+    template <typename... Ts>
+    auto event<Id, Callback>::fire(Ts &&...args)
+        requires std::invocable<callback_type, Ts...>
     {
-        for (auto &&result : fire(std::forward<T>(args)...))
+        std::lock_guard lock{m_mutex};
+        return invoker{m_callbacks, std::make_tuple(std::forward<Ts>(args)...)};
+    }
+
+    template <auto Id, impl::storable Callback>
+    template <typename U, typename... Ts>
+    std::optional<typename event<Id, Callback>::result_type> event<Id, Callback>::until(U &&value, Ts &&...args)
+        requires std::invocable<callback_type, Ts...> and impl::iterable<U, result_type>
+    {
+        for (auto result : fire(std::forward<Ts>(args)...))
         {
             if (result != value)
             {
@@ -88,12 +90,12 @@ namespace ereignis
         return std::nullopt;
     }
 
-    template <auto Id, callback Callback>
-    template <typename U, typename... T>
-    std::optional<typename event<Id, Callback>::result_t> event<Id, Callback>::during(U &&value, T &&...args) const
-        requires valid_arguments<callback_t, T...> and std::equality_comparable_with<result_t, U>
+    template <auto Id, impl::storable Callback>
+    template <typename U, typename... Ts>
+    std::optional<typename event<Id, Callback>::result_type> event<Id, Callback>::during(U &&value, Ts &&...args)
+        requires std::invocable<callback_type, Ts...> and impl::iterable<U, result_type>
     {
-        for (auto &&result : fire(std::forward<T>(args)...))
+        for (auto result : fire(std::forward<Ts>(args)...))
         {
             if (result == value)
             {

@@ -3,32 +3,33 @@
 #include <map>
 #include <tuple>
 #include <ranges>
-#include <functional>
 
 namespace ereignis
 {
-    template <typename T>
-    concept callback_list = requires(T t) {
-        []<typename A, typename B>(std::map<A, std::function<B>> &) {
-        }(t);
-    };
+    namespace impl
+    {
+        template <typename T, typename... As>
+        concept can_apply = requires(T callback, std::tuple<As...> tuple) {
+            { std::apply(callback, tuple) };
+        };
+    } // namespace impl
 
-    template <typename T, typename... P>
-    concept callback_parameters = requires(T t, std::tuple<P...> p) { std::apply(t.begin()->second, p); };
-
-    template <callback_list T, typename... P>
-        requires callback_parameters<T, P...>
+    template <typename T, typename... As>
+        requires impl::can_apply<T, As...>
     class invoker
     {
         class iterator;
-        using args_t = std::tuple<P...>;
 
       private:
-        T m_callbacks;
+        using args_t      = std::tuple<As...>;
+        using callbacks_t = std::map<std::size_t, T>;
+
+      private:
         args_t m_args;
+        callbacks_t m_callbacks;
 
       public:
-        invoker(T callbacks, args_t &&args);
+        invoker(callbacks_t callbacks, args_t args);
 
       public:
         auto end();
@@ -37,8 +38,8 @@ namespace ereignis
 
 } // namespace ereignis
 
-template <ereignis::callback_list T, typename... P>
-    requires ereignis::callback_parameters<T, P...>
-constexpr inline bool std::ranges::enable_view<ereignis::invoker<T, P...>> = true;
+template <typename T, typename... As>
+    requires ereignis::impl::can_apply<T, As...>
+constexpr inline bool std::ranges::enable_view<ereignis::invoker<T, As...>> = true;
 
 #include "invoker.inl"

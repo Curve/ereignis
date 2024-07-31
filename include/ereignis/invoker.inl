@@ -6,49 +6,49 @@
 
 namespace ereignis
 {
-    template <callback_list T, typename... P>
-        requires callback_parameters<T, P...>
-    class invoker<T, P...>::iterator
+    template <typename T, typename... As>
+        requires impl::can_apply<T, As...>
+    class invoker<T, As...>::iterator
     {
-        using iterator_t = typename T::iterator;
+        using iterator_t = callbacks_t::iterator;
 
       public:
-        using value_type        = typename T::mapped_type::result_type;
         using iterator_category = std::forward_iterator_tag;
         using difference_type   = std::ptrdiff_t;
+        using value_type        = T::result_type;
 
       private:
+        args_t m_args;
         iterator_t m_iterator;
-        args_t *m_args;
 
       public:
         iterator() = default;
 
       public:
-        iterator(iterator_t iterator, args_t &args) : m_iterator(iterator), m_args(&args) {}
+        iterator(iterator_t iterator, args_t args) : m_args(std::move(args)), m_iterator(std::move(iterator)) {}
 
       public:
         value_type operator*()
         {
-            return std::apply(m_iterator->second, *m_args);
+            return std::apply(m_iterator->second, m_args);
         }
 
         value_type operator*() const
         {
-            return std::apply(m_iterator->second, *m_args);
+            return std::apply(m_iterator->second, m_args);
         }
 
       public:
         iterator &operator++()
         {
-            m_iterator++;
+            ++m_iterator;
             return *this;
         }
 
         iterator operator++(int)
         {
             auto copy = *this;
-            m_iterator++;
+            ++m_iterator;
 
             return copy;
         }
@@ -60,22 +60,23 @@ namespace ereignis
         }
     };
 
-    template <callback_list T, typename... P>
-        requires callback_parameters<T, P...>
-    invoker<T, P...>::invoker(T callbacks, args_t &&args) : m_callbacks(std::move(callbacks)), m_args(std ::move(args))
+    template <typename T, typename... As>
+        requires impl::can_apply<T, As...>
+    invoker<T, As...>::invoker(callbacks_t callbacks, args_t args)
+        : m_args(std ::move(args)), m_callbacks(std::move(callbacks))
     {
     }
 
-    template <callback_list T, typename... P>
-        requires callback_parameters<T, P...>
-    auto invoker<T, P...>::begin()
+    template <typename T, typename... As>
+        requires impl::can_apply<T, As...>
+    auto invoker<T, As...>::begin()
     {
         return iterator{m_callbacks.begin(), m_args};
     }
 
-    template <callback_list T, typename... P>
-        requires callback_parameters<T, P...>
-    auto invoker<T, P...>::end()
+    template <typename T, typename... As>
+        requires impl::can_apply<T, As...>
+    auto invoker<T, As...>::end()
     {
         return iterator{m_callbacks.end(), m_args};
     }

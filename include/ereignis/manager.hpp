@@ -6,23 +6,36 @@
 
 namespace ereignis
 {
-    template <typename T>
-    concept ereignis_event = requires(T t) {
-        []<auto Id, callback Callback>(event<Id, Callback> &) {
-        }(t);
-    };
+    namespace impl
+    {
+        template <typename T>
+        struct is_event : std::false_type
+        {
+        };
 
-    template <ereignis_event... events>
+        template <auto Id, typename T>
+        struct is_event<event<Id, T>> : std::true_type
+        {
+        };
+
+        template <typename T>
+        concept event = requires() { requires is_event<T>::value; };
+    } // namespace impl
+
+    template <impl::event... events>
     class manager
     {
         std::tuple<events...> m_events;
 
       private:
         template <typename T, typename Visitor>
-        void find(T, Visitor);
+        constexpr void find(T, Visitor &&);
+
+        template <auto Id>
+        static consteval auto identity();
 
       public:
-        template <auto Id, std::size_t I = 0>
+        template <auto Id>
         constexpr auto &at();
 
       public:
@@ -33,11 +46,8 @@ namespace ereignis
         void remove(T event, std::size_t id);
 
       public:
-        template <auto Id, std::size_t I = 0>
-        static consteval auto type();
-
         template <auto Id>
-        using type_t = typename decltype(type<Id>())::type;
+        using type = decltype(identity<Id>())::type;
     };
 } // namespace ereignis
 

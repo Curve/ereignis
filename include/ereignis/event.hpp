@@ -2,60 +2,64 @@
 
 #include <map>
 #include <mutex>
-#include <atomic>
-
 #include <optional>
+
+#include <concepts>
 #include <functional>
 
 namespace ereignis
 {
-    template <typename T>
-    concept callback = requires(T t) { std::function{t}; };
-
-    template <typename Callback, typename... T>
-    concept valid_arguments = requires(Callback callback, T &&...args) { callback(std::forward<T>(args)...); };
-
-    template <auto Id, callback Callback>
-    class event
+    namespace impl
     {
-        using callback_t = std::function<Callback>;
-        using result_t   = callback_t::result_type;
+        template <typename T>
+        concept storable = requires(T callback) {
+            { std::function{callback} };
+        };
+
+        template <typename T, typename R>
+        concept iterable = requires() {
+            requires not std::is_void_v<R>;
+            requires std::equality_comparable_with<R, T>;
+        };
+    } // namespace impl
+
+    template <auto Id, impl::storable Callback>
+    struct event
+    {
+        static constexpr auto id = Id;
+        using callback_type      = std::function<Callback>;
+        using result_type        = callback_type::result_type;
 
       private:
         std::mutex m_mutex;
-        std::atomic_size_t m_counter{0};
-        std::map<std::size_t, callback_t> m_callbacks;
+        std::size_t m_counter{0};
+        std::map<std::size_t, callback_type> m_callbacks;
 
       public:
         void clear();
-
-      public:
         void remove(std::size_t id);
 
       public:
-        template <typename T>
-        std::size_t add(T &&callback)
-            requires std::constructible_from<callback_t, T>;
-
-        template <typename T>
-        void once(T &&callback)
-            requires std::constructible_from<callback_t, T>;
+        void once(callback_type callback);
+        std::size_t add(callback_type callback);
 
       public:
-        template <typename... T>
-        auto fire(T &&...args) const
-            requires valid_arguments<callback_t, T...>;
+        template <typename... Ts>
+        void fire(Ts &&...args)
+            requires std::is_void_v<result_type> and std::invocable<callback_type, Ts...>;
 
-        template <typename U, typename... T>
-        std::optional<result_t> until(U &&value, T &&...args) const
-            requires valid_arguments<callback_t, T...> and std::equality_comparable_with<result_t, U>;
-
-        template <typename U, typename... T>
-        std::optional<result_t> during(U &&value, T &&...args) const
-            requires valid_arguments<callback_t, T...> and std::equality_comparable_with<result_t, U>;
+        template <typename... Ts>
+        [[nodiscard]] auto fire(Ts &&...args)
+            requires std::invocable<callback_type, Ts...>;
 
       public:
-        static constexpr auto id = Id;
+        template <typename U, typename... Ts>
+        std::optional<result_type> until(U &&value, Ts &&...args)
+            requires std::invocable<callback_type, Ts...> and impl::iterable<U, result_type>;
+
+        template <typename U, typename... Ts>
+        std::optional<result_type> during(U &&value, Ts &&...args)
+            requires std::invocable<callback_type, Ts...> and impl::iterable<U, result_type>;
     };
 } // namespace ereignis
 

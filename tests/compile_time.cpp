@@ -37,11 +37,11 @@ suite<"constexpr"> constexpr_suite = []()
     expect(std::forward_iterator<iterator>);
     expect(std::same_as<until, std::optional<int>>);
 
-    expect(std::same_as<event_manager::type_t<0>, std::function<void()>>);
+    expect(std::same_as<event_manager::type<0>, std::function<void()>>);
 
-    expect(std::same_as<event_manager::type_t<0>::result_type, void>);
-    expect(std::same_as<event_manager::type_t<1>::result_type, int>);
+    expect(std::same_as<event_manager::type<0>::result_type, void>);
+    expect(std::same_as<event_manager::type<1>::result_type, int>);
 
-    expect(std::same_as<another_manager::template type_t<enum_ids::one>::result_type, void>);
-    expect(std::same_as<another_manager::template type_t<enum_ids::two>::result_type, int>);
+    expect(std::same_as<another_manager::template type<enum_ids::one>::result_type, void>);
+    expect(std::same_as<another_manager::template type<enum_ids::two>::result_type, int>);
 };
