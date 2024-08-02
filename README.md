@@ -6,7 +6,7 @@
 <br/>
 
 <p align="center">
-    A thread-safe C++23 Event Library
+    A thread-safe C++20 Event Library
 </p>
 
 <hr/>
@@ -18,8 +18,8 @@ _Ereignis_ is a library that implements an easy to use Event/Callback mechanism 
 ## 📦 Installation
 
 > [!NOTE]  
-> This library requires a C++23 capable compiler.
-> See versions `< v4.0` for C++20 support and `< 2.0` for C++17 support.
+> This library requires a C++20 capable compiler.
+> See versions `< 2.0` for C++17 support.
 
 * Using [CPM](https://github.com/cpm-cmake/CPM.cmake)
   ```cmake

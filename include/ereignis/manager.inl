@@ -45,7 +45,7 @@ namespace ereignis
     template <auto Id>
     constexpr auto &manager<events...>::at()
     {
-        auto fn = [&m_events = m_events]<typename T, std::integral auto I>(this T &self, impl::constant<I>) -> auto &
+        auto at_impl = [this]<std::integral auto I>(auto &self, impl::constant<I>) -> auto &
         {
             if constexpr (I < sizeof...(events))
             {
@@ -58,12 +58,12 @@ namespace ereignis
                 }
                 else
                 {
-                    return self(impl::constant<I + 1>{});
+                    return self(self, impl::constant<I + 1>{});
                 }
             }
         };
 
-        return fn(impl::constant<0>{});
+        return at_impl(at_impl, impl::constant<0>{});
     }
 
     template <impl::event... events>
