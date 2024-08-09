@@ -6,17 +6,55 @@
 namespace ereignis
 {
     template <auto Id, impl::storable Callback>
+    void event<Id, Callback>::on_clear()
+    {
+        std::lock_guard lock{m_clear_mutex};
+
+        if (!m_clear_callback)
+        {
+            return;
+        }
+
+        std::invoke(m_clear_callback);
+    }
+
+    template <auto Id, impl::storable Callback>
     void event<Id, Callback>::clear()
     {
-        std::lock_guard lock{m_mutex};
-        m_callbacks.clear();
+        {
+            std::lock_guard lock{m_mutex};
+            m_callbacks.clear();
+        }
+        on_clear();
     }
 
     template <auto Id, impl::storable Callback>
     void event<Id, Callback>::remove(std::size_t id)
     {
+        {
+            std::lock_guard lock{m_mutex};
+            m_callbacks.erase(id);
+
+            if (!m_callbacks.empty())
+            {
+                return;
+            }
+        }
+        on_clear();
+    }
+
+    template <auto Id, impl::storable Callback>
+    bool event<Id, Callback>::empty()
+    {
         std::lock_guard lock{m_mutex};
-        m_callbacks.erase(id);
+        return m_callbacks.empty();
+    }
+
+    template <auto Id, impl::storable Callback>
+    void event<Id, Callback>::on_clear(clear_callback callback)
+    {
+        std::lock_guard lock{m_clear_mutex};
+        m_clear_callback = std::move(callback);
     }
 
     template <auto Id, impl::storable Callback>

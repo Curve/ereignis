@@ -31,13 +31,27 @@ namespace ereignis
         using result_type        = callback_type::result_type;
 
       private:
+        using clear_callback = std::function<void()>;
+
+      private:
         std::mutex m_mutex;
         std::size_t m_counter{0};
         std::map<std::size_t, callback_type> m_callbacks;
 
+      private:
+        std::mutex m_clear_mutex;
+        clear_callback m_clear_callback;
+
+      private:
+        void on_clear();
+
       public:
         void clear();
         void remove(std::size_t id);
+
+      public:
+        [[nodiscard]] bool empty();
+        void on_clear(clear_callback);
 
       public:
         void once(callback_type callback);
