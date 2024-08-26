@@ -9,7 +9,7 @@ namespace ereignis
 {
     namespace impl
     {
-        template <std::integral auto T>
+        template <auto T>
         using constant = std::integral_constant<decltype(T), T>;
 
         template <auto Id, event... events>
@@ -45,7 +45,7 @@ namespace ereignis
     template <auto Id>
     constexpr auto &manager<events...>::at()
     {
-        auto at_impl = [this]<std::integral auto I>(auto &self, impl::constant<I>) -> auto &
+        auto at_impl = [this]<auto I>(auto &self, impl::constant<I>) -> auto &
         {
             if constexpr (I < sizeof...(events))
             {
