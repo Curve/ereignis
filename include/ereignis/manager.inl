@@ -16,7 +16,7 @@ namespace ereignis
         consteval auto type()
         {
             using event = std::decay_t<decltype(manager<events...>{}.template at<Id>())>;
-            return std::type_identity<typename event::callback_type>{};
+            return std::type_identity<typename event::callback>{};
         }
     } // namespace impl
 

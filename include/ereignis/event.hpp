@@ -27,8 +27,8 @@ namespace ereignis
     struct event
     {
         static constexpr auto id = Id;
-        using callback_type      = std::function<Callback>;
-        using result_type        = callback_type::result_type;
+        using callback           = std::function<Callback>;
+        using result             = callback::result_type;
 
       private:
         using clear_callback = std::function<void()>;
@@ -36,7 +36,7 @@ namespace ereignis
       private:
         std::mutex m_mutex;
         std::size_t m_counter{0};
-        std::map<std::size_t, callback_type> m_callbacks;
+        std::map<std::size_t, callback> m_callbacks;
 
       private:
         std::mutex m_clear_mutex;
@@ -44,6 +44,7 @@ namespace ereignis
 
       private:
         void on_clear();
+        [[nodiscard]] auto callbacks();
 
       public:
         void clear();
@@ -54,26 +55,26 @@ namespace ereignis
         void on_clear(clear_callback);
 
       public:
-        void once(callback_type callback);
-        std::size_t add(callback_type callback);
+        void once(callback callback);
+        std::size_t add(callback callback);
 
       public:
         template <typename... Ts>
         void fire(Ts &&...args)
-            requires std::is_void_v<result_type> and std::invocable<callback_type, Ts...>;
+            requires std::is_void_v<result> and std::invocable<callback, Ts...>;
 
         template <typename... Ts>
         [[nodiscard]] auto fire(Ts &&...args)
-            requires std::invocable<callback_type, Ts...>;
+            requires std::invocable<callback, Ts...>;
 
       public:
         template <typename U, typename... Ts>
-        std::optional<result_type> until(U &&value, Ts &&...args)
-            requires std::invocable<callback_type, Ts...> and impl::iterable<U, result_type>;
+        std::optional<result> until(U &&value, Ts &&...args)
+            requires std::invocable<callback, Ts...> and impl::iterable<U, result>;
 
         template <typename U, typename... Ts>
-        std::optional<result_type> during(U &&value, Ts &&...args)
-            requires std::invocable<callback_type, Ts...> and impl::iterable<U, result_type>;
+        std::optional<result> during(U &&value, Ts &&...args)
+            requires std::invocable<callback, Ts...> and impl::iterable<U, result>;
     };
 } // namespace ereignis
 
