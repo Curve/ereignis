@@ -31,7 +31,7 @@ include("cmake/cpm.cmake")
 
 CPMFindPackage(
   NAME           coco
-  VERSION        1.2.0
+  VERSION        1.2.1
   GIT_REPOSITORY "https://github.com/Curve/coco"
 )
 
