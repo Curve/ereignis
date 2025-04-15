@@ -1,5 +1,5 @@
 #include <boost/ut.hpp>
-#include <ereignis/manager.hpp>
+#include <ereignis/manager/manager.hpp>
 
 using namespace boost::ut;
 using namespace boost::ut::bdd;
@@ -21,75 +21,75 @@ suite<"runtime"> runtime_suite = []()
 
     std::size_t first_call_count{0};
 
-    event_manager.at<0>().add([&] { first_call_count++; });
+    event_manager.get<0>().add([&] { first_call_count++; });
 
-    auto id  = event_manager.at<0>().add([&] { first_call_count++; });
-    auto id2 = event_manager.at<0>().add([&] { first_call_count++; });
+    auto id  = event_manager.get<0>().add([&] { first_call_count++; });
+    auto id2 = event_manager.get<0>().add([&] { first_call_count++; });
 
-    event_manager.at<0>().fire();
-    expect(eq(first_call_count, 3));
+    event_manager.get<0>().fire();
+    expect(eq(first_call_count, 3ul));
 
-    event_manager.at<0>().remove(id);
-    event_manager.at<0>().fire();
+    event_manager.get<0>().remove(id);
+    event_manager.get<0>().fire();
 
-    expect(eq(first_call_count, 5));
+    expect(eq(first_call_count, 5ul));
 
     event_manager.remove(0, id2);
-    event_manager.at<0>().fire();
+    event_manager.get<0>().fire();
 
-    expect(eq(first_call_count, 6));
+    expect(eq(first_call_count, 6ul));
 
-    event_manager.at<0>().clear();
-    event_manager.at<0>().fire();
+    event_manager.get<0>().clear();
+    event_manager.get<0>().fire();
 
-    expect(eq(first_call_count, 6));
+    expect(eq(first_call_count, 6ul));
 
-    event_manager.at<1>().add([] { return 10; });
-    expect(eq(*event_manager.at<1>().fire().begin(), 10));
+    event_manager.get<1>().add([] { return 10; });
+    expect(eq(*event_manager.get<1>().fire().begin(), 10));
 
     std::size_t second_call_count{0};
 
-    event_manager.at<1>().add(
+    event_manager.get<1>().add(
         [&]
         {
             second_call_count++;
             return 0;
         });
 
-    event_manager.at<1>().add(
+    event_manager.get<1>().add(
         [&]
         {
             second_call_count++;
             return 1;
         });
 
-    event_manager.at<1>().add(
+    event_manager.get<1>().add(
         [&]
         {
             second_call_count++;
             return 2;
         });
 
-    auto res_until = event_manager.at<1>().until(1);
+    auto res_until = event_manager.get<1>().fire().find(1);
 
     expect(res_until.has_value() && eq(res_until.value(), 1));
-    expect(eq(second_call_count, 2));
+    expect(eq(second_call_count, 2ul));
 
-    auto res_during = event_manager.at<1>().during(0);
+    auto res_during = event_manager.get<1>().fire().skip(0);
 
     expect(res_during.has_value() && eq(res_during.value(), 10));
-    expect(eq(second_call_count, 2));
+    expect(eq(second_call_count, 2ul));
 
     std::vector<int> args{0, 2, 4, 5, 6, 7};
 
-    event_manager.at<2>().add([](int i) { return (i % 1) == 0; });
-    event_manager.at<2>().add([](int i) { return (i % 2) == 0; });
+    event_manager.get<2>().add([](int i) { return (i % 1) == 0; });
+    event_manager.get<2>().add([](int i) { return (i % 2) == 0; });
 
     for (const auto &arg : args)
     {
         bool first = true;
 
-        for (const auto &result : event_manager.at<2>().fire(arg))
+        for (const auto &result : event_manager.get<2>().fire(arg))
         {
             if (first)
             {
@@ -104,29 +104,29 @@ suite<"runtime"> runtime_suite = []()
         }
     }
 
-    event_manager.at<3>().add([](bool &value) { value = true; });
+    event_manager.get<3>().add([](bool &value) { value = true; });
 
     bool value = false;
-    event_manager.at<3>().fire(value);
+    event_manager.get<3>().fire(value);
 
     expect(value);
 
-    event_manager.at<4>().add([](bool *value) { (*value) = false; });
-    event_manager.at<4>().fire(&value);
+    event_manager.get<4>().add([](bool *value) { (*value) = false; });
+    event_manager.get<4>().fire(&value);
 
     expect(!value);
 
     event_manager.clear(3);
-    event_manager.at<3>().fire(value);
+    event_manager.get<3>().fire(value);
 
     expect(!value);
 
-    event_manager.at<5>().once([](bool &value) { value = !value; });
+    event_manager.get<5>().once([](bool &value) { value = !value; });
 
     bool once = false;
 
-    event_manager.at<5>().fire(once);
-    event_manager.at<5>().fire(once);
+    event_manager.get<5>().fire(once);
+    event_manager.get<5>().fire(once);
 
     expect(once);
 };

@@ -6,7 +6,7 @@
 <br/>
 
 <p align="center">
-    A thread-safe C++20 Event Library
+    A thread-safe C++23 Event Library
 </p>
 
 <hr/>
@@ -18,14 +18,15 @@ _Ereignis_ is a library that implements an easy to use Event/Callback mechanism 
 ## 📦 Installation
 
 > [!NOTE]  
-> This library requires a C++20 capable compiler.
-> See versions `< 2.0` for C++17 support.
+> This library requires a C++23 capable compiler!
+> * See versions `< 5.0` for C++20 support.
+> * See versions `< 2.0` for C++17 support.
 
 * Using [CPM](https://github.com/cpm-cmake/CPM.cmake)
   ```cmake
   CPMFindPackage(
     NAME           ereignis
-    VERSION        4.0
+    VERSION        5.0
     GIT_REPOSITORY "https://github.com/Curve/ereignis"
   )
   ```
@@ -34,7 +35,7 @@ _Ereignis_ is a library that implements an easy to use Event/Callback mechanism 
   ```cmake
   include(FetchContent)
 
-  FetchContent_Declare(ereignis GIT_REPOSITORY "https://github.com/Curve/ereignis" GIT_TAG v4.0)
+  FetchContent_Declare(ereignis GIT_REPOSITORY "https://github.com/Curve/ereignis" GIT_TAG v5.0)
   FetchContent_MakeAvailable(ereignis)
 
   target_link_libraries(<target> cr::ereignis)
@@ -45,7 +46,7 @@ _Ereignis_ is a library that implements an easy to use Event/Callback mechanism 
 * Basic callback
 
   ```cpp
-  #include <ereignis/manager.hpp>
+  #include <ereignis/manager/manager.hpp>
 
   using ereignis::event;
 
@@ -53,14 +54,14 @@ _Ereignis_ is a library that implements an easy to use Event/Callback mechanism 
     event<0, void(int)>
   > manager;
 
-  manager.at<0>().add([](int i) { std::cout << i << std::endl; });
-  manager.at<0>().fire(1337);
+  manager.get<0>().add([](int i) { std::cout << i << std::endl; });
+  manager.get<0>().fire(1337);
   ```
 
 * Result iteration
 
   ```cpp
-  #include <ereignis/manager.hpp>
+  #include <ereignis/manager/manager.hpp>
 
   enum class window_event
   {
@@ -73,9 +74,9 @@ _Ereignis_ is a library that implements an easy to use Event/Callback mechanism 
     event<window_event::close, bool()>
   > manager;
 
-  manager.at<window_event::close>().add([]() -> bool { return true; });
+  manager.get<window_event::close>().add([]() -> bool { return true; });
   
-  manager.at<window_event::close>().add([]() -> bool 
+  manager.get<window_event::close>().add([]() -> bool 
   { 
     std::cout << "Reached!" << std::endl; 
     return false; 
@@ -83,13 +84,17 @@ _Ereignis_ is a library that implements an easy to use Event/Callback mechanism 
 
   // Lets fire all callbacks until we get `true`.
 
-  for (const auto& result : manager.at<window_event::close>().fire())
+  manager.get<window_event::close>().fire().find(true);
+
+  // or...
+
+  for (const auto& result : manager.get<window_event::close>().fire())
   {
     if (result)
     {
       return;
     }
-  }
+  } 
 
   // 'Reached!' will never be printed.
   ```

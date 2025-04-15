@@ -1,6 +1,7 @@
 #include <boost/ut.hpp>
-#include <ereignis/manager.hpp>
+#include <ereignis/manager/manager.hpp>
 
+#include <cstdint>
 #include <concepts>
 
 using namespace boost::ut;
@@ -11,7 +12,7 @@ suite<"constexpr"> constexpr_suite = []()
 {
     using ereignis::event;
 
-    enum class enum_ids
+    enum class enum_ids : std::uint8_t
     {
         one,
         two,
@@ -29,19 +30,17 @@ suite<"constexpr"> constexpr_suite = []()
 
     event_manager dummy{};
 
-    using invoker  = decltype(dummy.at<1>().fire());
-    using until    = decltype(dummy.at<1>().until(1));
-    using iterator = decltype(dummy.at<1>().fire().begin());
+    using invoker = decltype(dummy.get<1>().fire());
+    using until   = decltype(dummy.get<1>().fire().find(1));
 
     expect(std::ranges::view<invoker>);
-    expect(std::forward_iterator<iterator>);
     expect(std::same_as<until, std::optional<int>>);
 
-    expect(std::same_as<event_manager::type<0>, std::function<void()>>);
+    expect(std::same_as<event_manager::event<0>::callback, std::move_only_function<void()>>);
 
-    expect(std::same_as<event_manager::type<0>::result_type, void>);
-    expect(std::same_as<event_manager::type<1>::result_type, int>);
+    expect(std::same_as<event_manager::event<0>::result, void>);
+    expect(std::same_as<event_manager::event<1>::result, int>);
 
-    expect(std::same_as<another_manager::template type<enum_ids::one>::result_type, void>);
-    expect(std::same_as<another_manager::template type<enum_ids::two>::result_type, int>);
+    expect(std::same_as<another_manager::event<enum_ids::one>::result, void>);
+    expect(std::same_as<another_manager::event<enum_ids::two>::result, int>);
 };
