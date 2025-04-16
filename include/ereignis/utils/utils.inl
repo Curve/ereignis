@@ -2,6 +2,8 @@
 
 #include "utils.hpp"
 
+#include <concepts>
+
 namespace ereignis::utils
 {
     template <typename T, typename U>
