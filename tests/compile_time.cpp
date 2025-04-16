@@ -7,16 +7,16 @@
 using namespace boost::ut;
 using namespace boost::ut::bdd;
 
+enum class enum_ids : std::uint8_t
+{
+    one,
+    two,
+};
+
 // NOLINTNEXTLINE
 suite<"constexpr"> constexpr_suite = []()
 {
     using ereignis::event;
-
-    enum class enum_ids : std::uint8_t
-    {
-        one,
-        two,
-    };
 
     using event_manager = ereignis::manager< //
         event<0, void()>,                    //

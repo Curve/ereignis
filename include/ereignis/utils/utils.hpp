@@ -5,11 +5,11 @@
 
 namespace ereignis::utils
 {
-    template <auto T, auto U>
-    concept comparable = std::equality_comparable_with<decltype(T), decltype(U)>;
-
     template <auto I>
     using constant = std::integral_constant<decltype(I), I>;
+
+    template <typename T, typename U>
+    constexpr bool equals(T, U);
 
     template <typename T>
     decltype(auto) forward_ref(std::remove_reference_t<T> &);

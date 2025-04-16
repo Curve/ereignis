@@ -11,14 +11,9 @@ namespace ereignis
     {
         static auto visit = [&]<typename Event>(Event &event)
         {
-            using Id = decltype(Event::id);
-
-            if constexpr (std::equality_comparable_with<Id, T>)
+            if (utils::equals(Event::id, id))
             {
-                if (Event::id == id)
-                {
-                    std::invoke(visitor, event);
-                }
+                std::invoke(visitor, event);
             }
         };
 
@@ -42,7 +37,7 @@ namespace ereignis
             {
                 using current = std::tuple_element_t<I, tuple>;
 
-                if constexpr (utils::comparable<current::id, Id> && current::id == Id)
+                if constexpr (utils::equals(current::id, Id))
                 {
                     return std::type_identity<current>{};
                 }
