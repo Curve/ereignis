@@ -44,10 +44,10 @@ target_link_libraries(${PROJECT_NAME} INTERFACE cr::coco)
 # Build Tests
 # --------------------------------------------------------------------------------------------------------
     
-if (ereignis_tests)
+# if (ereignis_tests)
   message(STATUS "[ereignis] Building Tests")
   add_subdirectory(tests)
-endif()
+# endif()
 
 # --------------------------------------------------------------------------------------------------------
 # Package Config
