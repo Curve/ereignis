@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(ereignis LANGUAGES CXX VERSION 5.0)
+project(ereignis LANGUAGES CXX VERSION 5.0.0)
 
 # --------------------------------------------------------------------------------------------------------
 # Library options
@@ -44,10 +44,10 @@ target_link_libraries(${PROJECT_NAME} INTERFACE cr::coco)
 # Build Tests
 # --------------------------------------------------------------------------------------------------------
     
-# if (ereignis_tests)
+if (ereignis_tests)
   message(STATUS "[ereignis] Building Tests")
   add_subdirectory(tests)
-# endif()
+endif()
 
 # --------------------------------------------------------------------------------------------------------
 # Package Config
