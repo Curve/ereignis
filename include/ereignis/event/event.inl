@@ -30,16 +30,15 @@ namespace ereignis
         auto lock = std::lock_guard{m_mutex};
         auto id   = m_counter++;
 
-        auto wrapped = std::make_shared<callback>();
-        *wrapped     = [this, id, wrapped, cb = std::move(cb)]<typename... Ts>(Ts &&...args) mutable
+        auto wrapped = [this, state = std::make_tuple(id, std::move(cb))]<typename... Ts>(Ts &&...args) mutable
         {
-            auto guard = std::move(wrapped);
-            remove(id);
+            auto [id, cb] = std::move(state);
 
+            remove(id);
             return std::invoke(cb, std::forward<Ts>(args)...);
         };
 
-        m_callbacks.emplace(id, std::move(wrapped));
+        m_callbacks.emplace(id, std::make_shared<callback>(std::move(wrapped)));
     }
 
     template <auto Id, typename Signature>
