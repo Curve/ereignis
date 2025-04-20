@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(ereignis LANGUAGES CXX VERSION 5.0.2)
+project(ereignis LANGUAGES CXX VERSION 5.0.3)
 
 # --------------------------------------------------------------------------------------------------------
 # Library options
@@ -34,7 +34,7 @@ include("cmake/cpm.cmake")
 
 CPMFindPackage(
   NAME           coco
-  VERSION        1.3.1
+  VERSION        1.4.0
   GIT_REPOSITORY "https://github.com/Curve/coco"
 )
 
