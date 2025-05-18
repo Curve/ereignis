@@ -52,6 +52,9 @@ namespace ereignis
         void remove(std::size_t);
 
       public:
+        [[nodiscard]] bool empty();
+
+      public:
         template <typename... Ts>
         void fire(Ts &&...)
             requires(std::is_void_v<result>);

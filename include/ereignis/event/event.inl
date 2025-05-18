@@ -82,6 +82,13 @@ namespace ereignis
     }
 
     template <auto Id, typename Signature>
+    bool event<Id, Signature>::empty()
+    {
+        auto lock = std::lock_guard{m_mutex};
+        return m_callbacks.empty();
+    }
+
+    template <auto Id, typename Signature>
     template <typename... Ts>
     void event<Id, Signature>::fire(Ts &&...args) // NOLINT(*-std-forward)
         requires(std::is_void_v<result>)
