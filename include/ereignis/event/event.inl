@@ -69,7 +69,7 @@ namespace ereignis
     }
 
     template <auto Id, typename R, typename... Ts>
-    auto event<Id, R(Ts...)>::await() -> coco::future<await_result>
+    auto event<Id, R(Ts...)>::await() -> future
         requires std::is_void_v<result>
     {
         auto promise = coco::promise<await_result>{};

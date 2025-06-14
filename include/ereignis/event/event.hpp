@@ -28,14 +28,15 @@ namespace ereignis
     {
         static constexpr auto id = Id;
 
-      public:
-        using callback  = std::move_only_function<R(Ts...)>;
-        using arguments = std::tuple<Ts...>;
-        using result    = R;
-
       private:
         using await_result   = impl::await_result<Ts...>::type;
         using clear_callback = std::move_only_function<void()>;
+
+      public:
+        using callback  = std::move_only_function<R(Ts...)>;
+        using future    = coco::future<await_result>;
+        using arguments = std::tuple<Ts...>;
+        using result    = R;
 
       private:
         std::mutex m_mutex;
@@ -54,7 +55,7 @@ namespace ereignis
         std::size_t add(callback);
 
       public:
-        auto await() -> coco::future<await_result>
+        auto await() -> future
             requires std::is_void_v<result>;
 
       public:
