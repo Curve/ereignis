@@ -1,4 +1,5 @@
 #include <boost/ut.hpp>
+#include <coco/utils/utils.hpp>
 #include <ereignis/manager/manager.hpp>
 
 using namespace boost::ut;
@@ -129,4 +130,16 @@ suite<"runtime"> runtime_suite = []()
     event_manager.get<5>().fire(once);
 
     expect(once);
+
+    bool *ptr = {};
+
+    coco::then(event_manager.get<4>().await(), [&ptr](auto *value) { ptr = value; });
+    event_manager.get<4>().fire(&once);
+
+    bool fired = false;
+
+    coco::then(event_manager.get<0>().await(), [&fired]() { fired = true; });
+    event_manager.get<0>().fire();
+
+    expect(eq(fired, true));
 };

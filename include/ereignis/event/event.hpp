@@ -6,6 +6,7 @@
 #include <map>
 #include <functional>
 
+#include <coco/promise/promise.hpp>
 #include <coco/generator/generator.hpp>
 
 namespace ereignis
@@ -14,18 +15,26 @@ namespace ereignis
     {
         template <typename T>
         struct is_event;
-    };
+
+        template <typename... Ts>
+        struct await_result;
+    }; // namespace impl
 
     template <auto Id, typename Signature>
-    struct event
+    struct event;
+
+    template <auto Id, typename R, typename... Ts>
+    struct event<Id, R(Ts...)>
     {
         static constexpr auto id = Id;
 
       public:
-        using callback = std::move_only_function<Signature>;
-        using result   = callback::result_type;
+        using callback  = std::move_only_function<R(Ts...)>;
+        using arguments = std::tuple<Ts...>;
+        using result    = R;
 
       private:
+        using await_result   = impl::await_result<Ts...>::type;
         using clear_callback = std::move_only_function<void()>;
 
       private:
@@ -45,6 +54,10 @@ namespace ereignis
         std::size_t add(callback);
 
       public:
+        auto await() -> coco::future<await_result>
+            requires std::is_void_v<result>;
+
+      public:
         void on_clear(clear_callback);
 
       public:
@@ -55,13 +68,13 @@ namespace ereignis
         [[nodiscard]] bool empty();
 
       public:
-        template <typename... Ts>
-        void fire(Ts &&...)
-            requires(std::is_void_v<result>);
+        template <typename... Us>
+        void fire(Us &&...)
+            requires(std::invocable<callback, Us...> and std::is_void_v<result>);
 
-        template <typename... Ts>
-        auto fire(Ts &&...) -> coco::generator<result>
-            requires(not std::is_void_v<result>);
+        template <typename... Us>
+        auto fire(Us &&...) -> coco::generator<result>
+            requires(std::invocable<callback, Us...> and not std::is_void_v<result>);
     };
 
     template <typename T>

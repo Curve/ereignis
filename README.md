@@ -8,7 +8,7 @@
 ## 📃 Description
 
 _Ereignis_ is a C++23 library that implements an easy to use Event / Callback mechanism.
-It also allows for lazy-evaluation of the callback results.
+It also allows for lazy-evaluation of the callback results and supports awaiting `void` returning events.
 
 ## 📦 Installation
 

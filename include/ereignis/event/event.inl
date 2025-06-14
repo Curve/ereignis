@@ -12,37 +12,54 @@ namespace ereignis
     {
     };
 
-    template <auto Id, typename Signature>
-    struct impl::is_event<event<Id, Signature>> : std::true_type
+    template <auto Id, typename R, typename... Ts>
+    struct impl::is_event<event<Id, R(Ts...)>> : std::true_type
     {
     };
 
-    template <auto Id, typename Signature>
-    auto event<Id, Signature>::copy()
+    template <typename... Ts>
+    struct impl::await_result
+    {
+        using type = std::tuple<Ts...>;
+    };
+
+    template <typename T>
+    struct impl::await_result<T>
+    {
+        using type = T;
+    };
+
+    template <>
+    struct impl::await_result<>
+    {
+        using type = void;
+    };
+
+    template <auto Id, typename R, typename... Ts>
+    auto event<Id, R(Ts...)>::copy()
     {
         auto lock = std::lock_guard{m_mutex};
         return m_callbacks | std::views::values | std::ranges::to<std::vector>();
     }
 
-    template <auto Id, typename Signature>
-    void event<Id, Signature>::once(callback cb)
+    template <auto Id, typename R, typename... Ts>
+    void event<Id, R(Ts...)>::once(callback cb)
     {
         auto lock = std::lock_guard{m_mutex};
         auto id   = m_counter++;
 
-        auto wrapped = [this, state = std::make_tuple(id, std::move(cb))]<typename... Ts>(Ts &&...args) mutable
+        auto wrapped = [this, state = std::make_tuple(id, std::move(cb))]<typename... Us>(Us &&...args) mutable
         {
             auto [id, cb] = std::move(state);
-
             remove(id);
-            return std::invoke(cb, std::forward<Ts>(args)...);
+            return std::invoke(cb, std::forward<Us>(args)...);
         };
 
         m_callbacks.emplace(id, std::make_shared<callback>(std::move(wrapped)));
     }
 
-    template <auto Id, typename Signature>
-    std::size_t event<Id, Signature>::add(callback cb)
+    template <auto Id, typename R, typename... Ts>
+    std::size_t event<Id, R(Ts...)>::add(callback cb)
     {
         auto lock = std::lock_guard{m_mutex};
         auto id   = m_counter++;
@@ -51,15 +68,38 @@ namespace ereignis
         return id;
     }
 
-    template <auto Id, typename Signature>
-    void event<Id, Signature>::on_clear(clear_callback cb)
+    template <auto Id, typename R, typename... Ts>
+    auto event<Id, R(Ts...)>::await() -> coco::future<await_result>
+        requires std::is_void_v<result>
+    {
+        auto promise = coco::promise<await_result>{};
+        auto future  = promise.get_future();
+
+        once(
+            [promise = std::move(promise)]<typename... Us>(Us &&...args) mutable
+            {
+                if constexpr (std::is_void_v<await_result>)
+                {
+                    promise.set_value();
+                }
+                else
+                {
+                    promise.set_value(await_result{std::forward<Us>(args)...});
+                }
+            });
+
+        return future;
+    }
+
+    template <auto Id, typename R, typename... Ts>
+    void event<Id, R(Ts...)>::on_clear(clear_callback cb)
     {
         auto lock        = std::lock_guard{m_clear_mutex};
         m_clear_callback = std::move(cb);
     }
 
-    template <auto Id, typename Signature>
-    void event<Id, Signature>::clear()
+    template <auto Id, typename R, typename... Ts>
+    void event<Id, R(Ts...)>::clear()
     {
         auto lock = std::unique_lock{m_mutex};
         m_callbacks.clear();
@@ -74,39 +114,39 @@ namespace ereignis
         std::invoke(m_clear_callback);
     }
 
-    template <auto Id, typename Signature>
-    void event<Id, Signature>::remove(std::size_t id)
+    template <auto Id, typename R, typename... Ts>
+    void event<Id, R(Ts...)>::remove(std::size_t id)
     {
         auto lock = std::lock_guard{m_mutex};
         m_callbacks.erase(id);
     }
 
-    template <auto Id, typename Signature>
-    bool event<Id, Signature>::empty()
+    template <auto Id, typename R, typename... Ts>
+    bool event<Id, R(Ts...)>::empty()
     {
         auto lock = std::lock_guard{m_mutex};
         return m_callbacks.empty();
     }
 
-    template <auto Id, typename Signature>
-    template <typename... Ts>
-    void event<Id, Signature>::fire(Ts &&...args) // NOLINT(*-std-forward)
-        requires(std::is_void_v<result>)
+    template <auto Id, typename R, typename... Ts>
+    template <typename... Us>
+    void event<Id, R(Ts...)>::fire(Us &&...args) // NOLINT(*-std-forward)
+        requires(std::invocable<callback, Us...> and std::is_void_v<result>)
     {
         for (const auto &callback : copy())
         {
-            std::invoke(*callback, utils::forward_ref<Ts>(args)...);
+            std::invoke(*callback, utils::forward_ref<Us>(args)...);
         }
     }
 
-    template <auto Id, typename Signature>
-    template <typename... Ts>
-    auto event<Id, Signature>::fire(Ts &&...args) -> coco::generator<result> // NOLINT(*-std-forward)
-        requires(not std::is_void_v<result>)
+    template <auto Id, typename R, typename... Ts>
+    template <typename... Us>
+    auto event<Id, R(Ts...)>::fire(Us &&...args) -> coco::generator<result> // NOLINT(*-std-forward)
+        requires(std::invocable<callback, Us...> and not std::is_void_v<result>)
     {
         for (const auto &callback : copy())
         {
-            co_yield std::invoke(*callback, utils::forward_ref<Ts>(args)...);
+            co_yield std::invoke(*callback, utils::forward_ref<Us>(args)...);
         }
     }
 } // namespace ereignis
