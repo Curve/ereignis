@@ -35,6 +35,28 @@ namespace ereignis
         using type = void;
     };
 
+    template <typename T>
+    struct impl::result
+    {
+        T value;
+
+      public:
+        struct invalid
+        {
+        };
+
+        static constexpr auto empty = invalid{};
+    };
+
+    template <>
+    struct impl::result<void>
+    {
+        result(std::monostate) {}
+
+      public:
+        static constexpr auto empty = std::monostate{};
+    };
+
     template <auto Id, typename R, typename... Ts>
     auto event<Id, R(Ts...)>::copy()
     {
@@ -69,14 +91,13 @@ namespace ereignis
     }
 
     template <auto Id, typename R, typename... Ts>
-    auto event<Id, R(Ts...)>::await() -> future
-        requires std::is_void_v<result>
+    auto event<Id, R(Ts...)>::await(impl::result<result> res) -> future
     {
         auto promise = coco::promise<await_result>{};
         auto future  = promise.get_future();
 
         once(
-            [promise = std::move(promise)]<typename... Us>(Us &&...args) mutable
+            [promise = std::move(promise), res = std::move(res)]<typename... Us>(Us &&...args) mutable
             {
                 if constexpr (std::is_void_v<await_result>)
                 {
@@ -85,6 +106,15 @@ namespace ereignis
                 else
                 {
                     promise.set_value(await_result{std::forward<Us>(args)...});
+                }
+
+                if constexpr (!std::is_void_v<result>)
+                {
+                    return std::move(res.value);
+                }
+                else
+                {
+                    static_cast<void>(res);
                 }
             });
 
