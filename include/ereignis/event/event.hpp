@@ -19,9 +19,12 @@ namespace ereignis
         template <typename... Ts>
         struct await_result;
 
-        template <typename T>
-        struct result;
+        template <typename Result, typename... Ts>
+        struct await_return;
     }; // namespace impl
+
+    template <typename Result, typename... Ts>
+    concept AwaitReturn = impl::await_return<Result, Ts...>::value;
 
     template <auto Id, typename Signature>
     struct event;
@@ -36,11 +39,10 @@ namespace ereignis
         using clear_callback = std::move_only_function<void()>;
 
       public:
-        using callback    = std::move_only_function<R(Ts...)>;
-        using future      = coco::future<await_result>;
-        using future_args = impl::result<R>;
-        using arguments   = std::tuple<Ts...>;
-        using result      = R;
+        using callback  = std::move_only_function<R(Ts...)>;
+        using future    = coco::future<await_result>;
+        using arguments = std::tuple<Ts...>;
+        using result    = R;
 
       private:
         std::mutex m_mutex;
@@ -59,7 +61,9 @@ namespace ereignis
         std::size_t add(callback);
 
       public:
-        auto await(future_args = future_args::empty) -> future;
+        template <typename... Rs>
+        auto await(Rs &&...) -> future
+            requires AwaitReturn<result, Rs...>;
 
       public:
         void on_clear(clear_callback);

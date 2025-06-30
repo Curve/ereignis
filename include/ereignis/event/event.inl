@@ -35,26 +35,20 @@ namespace ereignis
         using type = void;
     };
 
-    template <typename T>
-    struct impl::result
+    template <typename Result, typename... Ts>
+    struct impl::await_return : std::false_type
     {
-        T value;
-
-      public:
-        struct invalid
-        {
-        };
-
-        static constexpr auto empty = invalid{};
     };
 
     template <>
-    struct impl::result<void>
+    struct impl::await_return<void> : std::true_type
     {
-        result(std::monostate) {}
+    };
 
-      public:
-        static constexpr auto empty = std::monostate{};
+    template <typename Result, typename... Ts>
+        requires(sizeof...(Ts) > 0 && std::constructible_from<Result, Ts...>)
+    struct impl::await_return<Result, Ts...> : std::true_type
+    {
     };
 
     template <auto Id, typename R, typename... Ts>
@@ -91,13 +85,15 @@ namespace ereignis
     }
 
     template <auto Id, typename R, typename... Ts>
-    auto event<Id, R(Ts...)>::await(impl::result<result> res) -> future
+    template <typename... Rs>
+    auto event<Id, R(Ts...)>::await(Rs &&...res) -> future
+        requires AwaitReturn<result, Rs...>
     {
         auto promise = coco::promise<await_result>{};
         auto future  = promise.get_future();
 
         once(
-            [promise = std::move(promise), res = std::move(res)]<typename... Us>(Us &&...args) mutable
+            [promise = std::move(promise), ... res = std::forward<Rs>(res)]<typename... Us>(Us &&...args) mutable
             {
                 if constexpr (std::is_void_v<await_result>)
                 {
@@ -110,11 +106,11 @@ namespace ereignis
 
                 if constexpr (!std::is_void_v<result>)
                 {
-                    return std::move(res.value);
+                    return result{std::forward<Rs>(res)...};
                 }
                 else
                 {
-                    static_cast<void>(res);
+                    (static_cast<void>(res), ...);
                 }
             });
 
