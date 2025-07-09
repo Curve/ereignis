@@ -1,7 +1,6 @@
 #pragma once
 
 #include "event.hpp"
-#include "../utils/utils.hpp"
 
 #include <ranges>
 
@@ -155,24 +154,22 @@ namespace ereignis
     }
 
     template <auto Id, typename R, typename... Ts>
-    template <typename... Us>
-    void event<Id, R(Ts...)>::fire(Us &&...args) // NOLINT(*-std-forward)
-        requires(std::invocable<callback, Us...> and std::is_void_v<result>)
+    void event<Id, R(Ts...)>::fire(Ts... args)
+        requires(std::is_void_v<result>)
     {
         for (const auto &callback : copy())
         {
-            std::invoke(*callback, utils::forward_ref<Us>(args)...);
+            std::invoke(*callback, args...);
         }
     }
 
     template <auto Id, typename R, typename... Ts>
-    template <typename... Us>
-    auto event<Id, R(Ts...)>::fire(Us &&...args) -> coco::generator<result> // NOLINT(*-std-forward)
-        requires(std::invocable<callback, Us...> and not std::is_void_v<result>)
+    auto event<Id, R(Ts...)>::fire(Ts... args) -> coco::generator<result>
+        requires(not std::is_void_v<result>)
     {
         for (const auto &callback : copy())
         {
-            co_yield std::invoke(*callback, utils::forward_ref<Us>(args)...);
+            co_yield std::invoke(*callback, args...);
         }
     }
 } // namespace ereignis

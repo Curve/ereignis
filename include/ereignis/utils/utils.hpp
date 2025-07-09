@@ -9,9 +9,6 @@ namespace ereignis::utils
 
     template <typename T, typename U>
     constexpr bool equals(T, U);
-
-    template <typename T>
-    decltype(auto) forward_ref(std::remove_reference_t<T> &);
 } // namespace ereignis::utils
 
 #include "utils.inl"

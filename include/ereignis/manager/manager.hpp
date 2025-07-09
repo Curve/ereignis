@@ -20,6 +20,11 @@ namespace ereignis
         constexpr auto visit(T, const Visitor &);
 
       public:
+        manager()                    = default;
+        manager(const manager &)     = delete;
+        manager(manager &&) noexcept = delete;
+
+      public:
         template <auto Id>
         using event = decltype(find<Id>())::type;
 

@@ -57,6 +57,11 @@ namespace ereignis
         auto copy();
 
       public:
+        event()                  = default;
+        event(const event &)     = delete;
+        event(event &&) noexcept = delete;
+
+      public:
         void once(callback);
         std::size_t add(callback);
 
@@ -76,13 +81,11 @@ namespace ereignis
         [[nodiscard]] bool empty();
 
       public:
-        template <typename... Us>
-        void fire(Us &&...)
-            requires(std::invocable<callback, Us...> and std::is_void_v<result>);
+        void fire(Ts...)
+            requires(std::is_void_v<result>);
 
-        template <typename... Us>
-        auto fire(Us &&...) -> coco::generator<result>
-            requires(std::invocable<callback, Us...> and not std::is_void_v<result>);
+        auto fire(Ts...) -> coco::generator<result>
+            requires(not std::is_void_v<result>);
     };
 
     template <typename T>
