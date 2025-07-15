@@ -36,8 +36,6 @@ suite<"constexpr"> constexpr_suite = []()
     expect(std::ranges::view<invoker>);
     expect(std::same_as<until, std::optional<int>>);
 
-    expect(std::same_as<event_manager::event<0>::function, std::move_only_function<void()>>);
-
     expect(std::same_as<event_manager::event<0>::result, void>);
     expect(std::same_as<event_manager::event<1>::result, int>);
 

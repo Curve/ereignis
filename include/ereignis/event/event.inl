@@ -50,11 +50,39 @@ namespace ereignis
     {
     };
 
+    template <typename R, typename... Ts>
+    struct listener<R(Ts...), true>
+    {
+        std::move_only_function<R(Ts...)> func;
+
+      public:
+        bool clearable{true};
+    };
+
+    template <typename R, typename... Ts>
+    struct listener<R(Ts...), false> : listener<R(Ts...), true>
+    {
+        using base = listener<R(Ts...), true>;
+
+      public:
+        template <typename T>
+            requires std::same_as<std::invoke_result_t<T, Ts...>, R>
+        listener(T &&func) : base(std::forward<T>(func))
+        {
+        }
+
+      public:
+        template <typename T>
+        listener(base value) : base(std::move(value))
+        {
+        }
+    };
+
     template <auto Id, typename R, typename... Ts>
     auto event<Id, R(Ts...)>::copy()
     {
         auto lock = std::lock_guard{m_mutex};
-        return m_callbacks | std::views::values | std::ranges::to<std::vector>();
+        return m_listeners | std::views::values | std::ranges::to<std::vector>();
     }
 
     template <auto Id, typename R, typename... Ts>
@@ -71,29 +99,23 @@ namespace ereignis
     }
 
     template <auto Id, typename R, typename... Ts>
-    std::size_t event<Id, R(Ts...)>::add(callback cb)
+    std::size_t event<Id, R(Ts...)>::add(listener l)
     {
         auto lock = std::lock_guard{m_mutex};
         auto id   = m_counter++;
 
-        m_callbacks.emplace(id, std::make_shared<callback>(std::move(cb)));
+        m_listeners.emplace(id, std::make_shared<listener>(std::move(l)));
 
         return id;
     }
 
     template <auto Id, typename R, typename... Ts>
-    std::size_t event<Id, R(Ts...)>::add(function cb)
-    {
-        return add({.func = std::move(cb)});
-    }
-
-    template <auto Id, typename R, typename... Ts>
-    void event<Id, R(Ts...)>::once(callback cb)
+    void event<Id, R(Ts...)>::once(listener l)
     {
         auto lock = std::lock_guard{m_mutex};
         auto id   = m_counter++;
 
-        cb.func = [this, state = std::make_tuple(id, std::move(cb.func))]<typename... Us>(Us &&...args) mutable
+        l.func = [this, state = std::make_tuple(id, std::move(l.func))]<typename... Us>(Us &&...args) mutable
         {
             auto [id, func] = std::move(state);
 
@@ -101,13 +123,7 @@ namespace ereignis
             return std::invoke(func, std::forward<Us>(args)...);
         };
 
-        m_callbacks.emplace(id, std::make_shared<callback>(std::move(cb)));
-    }
-
-    template <auto Id, typename R, typename... Ts>
-    void event<Id, R(Ts...)>::once(function cb)
-    {
-        once({.func = std::move(cb)});
+        m_listeners.emplace(id, std::make_shared<listener>(std::move(l)));
     }
 
     template <auto Id, typename R, typename... Ts>
@@ -155,20 +171,20 @@ namespace ereignis
     {
         auto lock = std::lock_guard{m_mutex};
 
-        for (auto it = m_callbacks.begin(); it != m_callbacks.end();)
+        for (auto it = m_listeners.begin(); it != m_listeners.end();)
         {
-            const auto &[id, callback] = *it;
+            const auto &[id, listener] = *it;
 
-            if (!callback->clearable)
+            if (!listener->clearable)
             {
                 ++it;
                 continue;
             }
 
-            it = m_callbacks.erase(it);
+            it = m_listeners.erase(it);
         }
 
-        if (!m_callbacks.empty())
+        if (!m_listeners.empty())
         {
             return;
         }
@@ -180,9 +196,9 @@ namespace ereignis
     void event<Id, R(Ts...)>::remove(std::size_t id)
     {
         auto lock = std::lock_guard{m_mutex};
-        m_callbacks.erase(id);
+        m_listeners.erase(id);
 
-        if (!m_callbacks.empty())
+        if (!m_listeners.empty())
         {
             return;
         }
@@ -194,16 +210,16 @@ namespace ereignis
     bool event<Id, R(Ts...)>::empty()
     {
         auto lock = std::lock_guard{m_mutex};
-        return m_callbacks.empty();
+        return m_listeners.empty();
     }
 
     template <auto Id, typename R, typename... Ts>
     void event<Id, R(Ts...)>::fire(Ts... args)
         requires(std::is_void_v<result>)
     {
-        for (const auto &callback : copy())
+        for (const auto &listener : copy())
         {
-            std::invoke(callback->func, args...);
+            std::invoke(listener->func, args...);
         }
     }
 
@@ -211,9 +227,9 @@ namespace ereignis
     auto event<Id, R(Ts...)>::fire(Ts... args) -> coco::generator<result>
         requires(not std::is_void_v<result>)
     {
-        for (const auto &callback : copy())
+        for (const auto &listener : copy())
         {
-            co_yield std::invoke(callback->func, args...);
+            co_yield std::invoke(listener->func, args...);
         }
     }
 } // namespace ereignis
