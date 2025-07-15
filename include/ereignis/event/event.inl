@@ -53,9 +53,10 @@ namespace ereignis
     template <typename R, typename... Ts>
     struct listener<R(Ts...), true>
     {
-        std::move_only_function<R(Ts...)> func;
+        using callback = std::move_only_function<R(Ts...)>;
 
       public:
+        callback func;
         bool clearable{true};
     };
 
@@ -110,20 +111,20 @@ namespace ereignis
     }
 
     template <auto Id, typename R, typename... Ts>
-    void event<Id, R(Ts...)>::once(listener l)
+    void event<Id, R(Ts...)>::once(listener::callback cb)
     {
         auto lock = std::lock_guard{m_mutex};
         auto id   = m_counter++;
 
-        l.func = [this, state = std::make_tuple(id, std::move(l.func))]<typename... Us>(Us &&...args) mutable
+        auto wrapper = [this, state = std::make_tuple(id, std::move(cb))]<typename... Us>(Us &&...args) mutable
         {
-            auto [id, func] = std::move(state);
+            auto [id, cb] = std::move(state);
 
             remove(id);
-            return std::invoke(func, std::forward<Us>(args)...);
+            return std::invoke(cb, std::forward<Us>(args)...);
         };
 
-        m_listeners.emplace(id, std::make_shared<listener>(std::move(l)));
+        m_listeners.emplace(id, std::make_shared<listener>(std::move(wrapper)));
     }
 
     template <auto Id, typename R, typename... Ts>

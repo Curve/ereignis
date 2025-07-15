@@ -67,7 +67,7 @@ namespace ereignis
 
       public:
         std::size_t add(listener);
-        void once(listener);
+        void once(listener::callback);
 
       public:
         template <typename... Rs>
