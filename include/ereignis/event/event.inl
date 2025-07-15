@@ -58,19 +58,16 @@ namespace ereignis
     }
 
     template <auto Id, typename R, typename... Ts>
-    void event<Id, R(Ts...)>::once(callback cb)
+    void event<Id, R(Ts...)>::cleared()
     {
-        auto lock = std::lock_guard{m_mutex};
-        auto id   = m_counter++;
+        auto lock = std::lock_guard{m_clear_mutex};
 
-        auto wrapped = [this, state = std::make_tuple(id, std::move(cb))]<typename... Us>(Us &&...args) mutable
+        if (!m_clear_callback)
         {
-            auto [id, cb] = std::move(state);
-            remove(id);
-            return std::invoke(cb, std::forward<Us>(args)...);
-        };
+            return;
+        }
 
-        m_callbacks.emplace(id, std::make_shared<callback>(std::move(wrapped)));
+        std::invoke(m_clear_callback);
     }
 
     template <auto Id, typename R, typename... Ts>
@@ -80,7 +77,37 @@ namespace ereignis
         auto id   = m_counter++;
 
         m_callbacks.emplace(id, std::make_shared<callback>(std::move(cb)));
+
         return id;
+    }
+
+    template <auto Id, typename R, typename... Ts>
+    std::size_t event<Id, R(Ts...)>::add(function cb)
+    {
+        return add({.func = std::move(cb)});
+    }
+
+    template <auto Id, typename R, typename... Ts>
+    void event<Id, R(Ts...)>::once(callback cb)
+    {
+        auto lock = std::lock_guard{m_mutex};
+        auto id   = m_counter++;
+
+        cb.func = [this, state = std::make_tuple(id, std::move(cb.func))]<typename... Us>(Us &&...args) mutable
+        {
+            auto [id, func] = std::move(state);
+
+            remove(id);
+            return std::invoke(func, std::forward<Us>(args)...);
+        };
+
+        m_callbacks.emplace(id, std::make_shared<callback>(std::move(cb)));
+    }
+
+    template <auto Id, typename R, typename... Ts>
+    void event<Id, R(Ts...)>::once(function cb)
+    {
+        once({.func = std::move(cb)});
     }
 
     template <auto Id, typename R, typename... Ts>
@@ -126,17 +153,27 @@ namespace ereignis
     template <auto Id, typename R, typename... Ts>
     void event<Id, R(Ts...)>::clear()
     {
-        auto lock = std::unique_lock{m_mutex};
-        m_callbacks.clear();
+        auto lock = std::lock_guard{m_mutex};
 
-        lock = std::unique_lock{m_clear_mutex};
+        for (auto it = m_callbacks.begin(); it != m_callbacks.end();)
+        {
+            const auto &[id, callback] = *it;
 
-        if (!m_clear_callback)
+            if (!callback->clearable)
+            {
+                ++it;
+                continue;
+            }
+
+            it = m_callbacks.erase(it);
+        }
+
+        if (!m_callbacks.empty())
         {
             return;
         }
 
-        std::invoke(m_clear_callback);
+        cleared();
     }
 
     template <auto Id, typename R, typename... Ts>
@@ -144,6 +181,13 @@ namespace ereignis
     {
         auto lock = std::lock_guard{m_mutex};
         m_callbacks.erase(id);
+
+        if (!m_callbacks.empty())
+        {
+            return;
+        }
+
+        cleared();
     }
 
     template <auto Id, typename R, typename... Ts>
@@ -159,7 +203,7 @@ namespace ereignis
     {
         for (const auto &callback : copy())
         {
-            std::invoke(*callback, args...);
+            std::invoke(callback->func, args...);
         }
     }
 
@@ -169,7 +213,7 @@ namespace ereignis
     {
         for (const auto &callback : copy())
         {
-            co_yield std::invoke(*callback, args...);
+            co_yield std::invoke(callback->func, args...);
         }
     }
 } // namespace ereignis

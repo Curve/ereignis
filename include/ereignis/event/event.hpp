@@ -29,6 +29,15 @@ namespace ereignis
     template <auto Id, typename Signature>
     struct event;
 
+    template <typename T>
+    struct callback
+    {
+        T func;
+
+      public:
+        bool clearable{true};
+    };
+
     template <auto Id, typename R, typename... Ts>
     struct event<Id, R(Ts...)>
     {
@@ -39,7 +48,8 @@ namespace ereignis
         using clear_callback = std::move_only_function<void()>;
 
       public:
-        using callback  = std::move_only_function<R(Ts...)>;
+        using function  = std::move_only_function<R(Ts...)>;
+        using callback  = callback<function>;
         using future    = coco::future<await_result>;
         using arguments = std::tuple<Ts...>;
         using result    = R;
@@ -55,6 +65,7 @@ namespace ereignis
 
       private:
         auto copy();
+        void cleared();
 
       public:
         event()                  = default;
@@ -62,8 +73,12 @@ namespace ereignis
         event(event &&) noexcept = delete;
 
       public:
-        void once(callback);
         std::size_t add(callback);
+        std::size_t add(function);
+
+      public:
+        void once(callback);
+        void once(function);
 
       public:
         template <typename... Rs>
