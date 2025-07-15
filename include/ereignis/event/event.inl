@@ -66,15 +66,12 @@ namespace ereignis
         using base = listener<R(Ts...), true>;
 
       public:
-        template <typename T>
-            requires std::same_as<std::invoke_result_t<T, Ts...>, R>
-        listener(T &&func) : base(std::forward<T>(func))
-        {
-        }
+        listener(base value) : base(std::move(value)) {}
 
       public:
         template <typename T>
-        listener(base value) : base(std::move(value))
+            requires std::same_as<std::invoke_result_t<T, Ts...>, R>
+        listener(T &&func) : base(std::forward<T>(func))
         {
         }
     };
