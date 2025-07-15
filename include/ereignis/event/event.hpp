@@ -49,7 +49,7 @@ namespace ereignis
 
       public:
         using function  = std::move_only_function<R(Ts...)>;
-        using callback  = callback<function>;
+        using callback  = ereignis::callback<function>;
         using future    = coco::future<await_result>;
         using arguments = std::tuple<Ts...>;
         using result    = R;
