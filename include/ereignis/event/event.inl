@@ -97,21 +97,25 @@ namespace ereignis
     }
 
     template <auto Id, typename R, typename... Ts>
-    std::size_t event<Id, R(Ts...)>::add(listener l)
+    std::size_t event<Id, R(Ts...)>::add(listener value)
     {
-        auto lock = std::lock_guard{m_mutex};
-        auto id   = m_counter++;
-
-        m_listeners.emplace(id, std::make_shared<listener>(std::move(l)));
+        const auto id = m_counter++;
+        update(id, std::move(value));
 
         return id;
     }
 
     template <auto Id, typename R, typename... Ts>
-    void event<Id, R(Ts...)>::once(listener::callback cb)
+    void event<Id, R(Ts...)>::update(std::size_t id, listener value)
     {
         auto lock = std::lock_guard{m_mutex};
-        auto id   = m_counter++;
+        m_listeners.insert_or_assign(id, std::make_shared<listener>(std::move(value)));
+    }
+
+    template <auto Id, typename R, typename... Ts>
+    void event<Id, R(Ts...)>::once(listener::callback cb)
+    {
+        const auto id = m_counter++;
 
         auto wrapper = [this, state = std::make_tuple(id, std::move(cb))]<typename... Us>(Us &&...args) mutable
         {
@@ -121,7 +125,7 @@ namespace ereignis
             return std::invoke(cb, std::forward<Us>(args)...);
         };
 
-        m_listeners.emplace(id, std::make_shared<listener>(std::move(wrapper)));
+        update(id, std::move(wrapper));
     }
 
     template <auto Id, typename R, typename... Ts>

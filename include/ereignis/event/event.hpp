@@ -1,9 +1,10 @@
 #pragma once
 
 #include <mutex>
-#include <memory>
+#include <atomic>
 
 #include <map>
+#include <memory>
 #include <functional>
 
 #include <coco/promise/promise.hpp>
@@ -53,7 +54,7 @@ namespace ereignis
 
       private:
         std::mutex m_mutex;
-        std::size_t m_counter{0};
+        std::atomic_size_t m_counter{0};
         std::map<std::size_t, std::shared_ptr<listener>> m_listeners;
 
       private:
@@ -67,6 +68,9 @@ namespace ereignis
 
       public:
         std::size_t add(listener);
+        void update(std::size_t, listener);
+
+      public:
         void once(listener::callback);
 
       public:
