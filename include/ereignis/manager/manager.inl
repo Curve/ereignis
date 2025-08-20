@@ -9,7 +9,7 @@ namespace ereignis
     template <typename T, typename Visitor>
     constexpr auto manager<Events...>::visit(T id, const Visitor &visitor)
     {
-        static auto visit = [&]<typename Event>(Event &event)
+        auto visit = [&]<typename Event>(Event &event)
         {
             if (utils::equals(Event::id, id))
             {
@@ -17,7 +17,7 @@ namespace ereignis
             }
         };
 
-        static auto unpack = []<typename... Ts>(Ts &...events)
+        auto unpack = [&]<typename... Ts>(Ts &...events)
         {
             (visit(events), ...);
         };
