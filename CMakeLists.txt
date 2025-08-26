@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(ereignis LANGUAGES CXX VERSION 6.0.0)
+project(ereignis LANGUAGES CXX VERSION 6.1.0)
 
 # --------------------------------------------------------------------------------------------------------
 # Library options

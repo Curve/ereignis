@@ -82,7 +82,7 @@ namespace ereignis
         void on_clear(clear_callback);
 
       public:
-        void clear();
+        void clear(bool = false);
         void remove(std::size_t);
 
       public:

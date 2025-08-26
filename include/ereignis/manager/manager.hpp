@@ -33,9 +33,12 @@ namespace ereignis
         auto &get();
 
       public:
-        template <typename T>
-        void clear(T);
+        void clear(bool = false);
 
+        template <typename T>
+        void clear(T, bool = false);
+
+      public:
         template <typename T>
         void remove(T, std::size_t);
     };

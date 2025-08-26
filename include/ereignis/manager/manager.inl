@@ -17,7 +17,7 @@ namespace ereignis
             }
         };
 
-        auto unpack = [&]<typename... Ts>(Ts &...events)
+        auto unpack = [&](auto &...events)
         {
             (visit(events), ...);
         };
@@ -59,10 +59,26 @@ namespace ereignis
     }
 
     template <Event... Events>
-    template <typename T>
-    void manager<Events...>::clear(T event)
+    void manager<Events...>::clear(bool force)
     {
-        visit(event, [](auto &event) { event.clear(); });
+        auto visitor = [force](auto &event)
+        {
+            event.clear(force);
+        };
+
+        auto unpack = [&](auto &...events)
+        {
+            (visitor(events), ...);
+        };
+
+        std::apply(unpack, m_events);
+    }
+
+    template <Event... Events>
+    template <typename T>
+    void manager<Events...>::clear(T event, bool force)
+    {
+        visit(event, [force](auto &event) { event.clear(force); });
     }
 
     template <Event... Events>

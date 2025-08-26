@@ -169,7 +169,7 @@ namespace ereignis
     }
 
     template <auto Id, typename R, typename... Ts>
-    void event<Id, R(Ts...)>::clear()
+    void event<Id, R(Ts...)>::clear(bool force)
     {
         auto lock = std::lock_guard{m_mutex};
 
@@ -177,7 +177,7 @@ namespace ereignis
         {
             const auto &[id, listener] = *it;
 
-            if (!listener->clearable)
+            if (!force && !listener->clearable)
             {
                 ++it;
                 continue;
