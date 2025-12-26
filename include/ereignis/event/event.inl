@@ -93,7 +93,7 @@ namespace ereignis
             return;
         }
 
-        std::invoke(m_clear_callback);
+        m_clear_callback();
     }
 
     template <auto Id, typename R, typename... Ts>
@@ -120,9 +120,8 @@ namespace ereignis
         auto wrapper = [this, state = std::make_tuple(id, std::move(cb))]<typename... Us>(Us &&...args) mutable
         {
             auto [id, cb] = std::move(state);
-
             remove(id);
-            return std::invoke(cb, std::forward<Us>(args)...);
+            return cb(std::forward<Us>(args)...);
         };
 
         update(id, std::move(wrapper));
@@ -221,7 +220,7 @@ namespace ereignis
     {
         for (const auto &listener : copy())
         {
-            std::invoke(listener->func, args...);
+            listener->func(args...);
         }
     }
 
@@ -231,7 +230,7 @@ namespace ereignis
     {
         for (const auto &listener : copy())
         {
-            co_yield std::invoke(listener->func, args...);
+            co_yield listener->func(args...);
         }
     }
 } // namespace ereignis

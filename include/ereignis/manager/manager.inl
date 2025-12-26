@@ -13,7 +13,7 @@ namespace ereignis
         {
             if (utils::equals(Event::id, id))
             {
-                std::invoke(visitor, event);
+                visitor(event);
             }
         };
 
